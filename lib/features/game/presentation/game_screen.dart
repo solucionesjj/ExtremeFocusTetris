@@ -11,8 +11,13 @@ import '../../../core/services/audio_service.dart';
 import '../../../core/services/game_ticker_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../settings/presentation/viewmodels/settings_controller.dart';
+import '../domain/entities/board.dart';
 import '../domain/entities/game_status.dart';
+import 'effects/particle_pool.dart';
 import 'viewmodels/game_controller.dart';
+import 'viewmodels/line_clear_event.dart';
+import 'viewmodels/line_clear_event_controller.dart';
+import 'widgets/board_geometry.dart';
 import 'widgets/board_painter.dart';
 import 'widgets/hold_widget.dart';
 import 'widgets/next_queue_widget.dart';
@@ -35,11 +40,46 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final GameTickerService _ticker = GameTickerService();
+  final ParticlePool _particlePool = ParticlePool();
   bool _isPaused = false;
   bool _showLevelUpBanner = false;
   bool _showFocusLevelUpFlash = false;
+  bool _showComboPopup = false;
+  bool _showFocusComboGlow = false;
+  bool _scorePulse = false;
+  bool _comboPulse = false;
+  int _comboPopupValue = 0;
+  List<int> _flashRows = const [];
+
+  // Captured from the board's LayoutBuilder each frame — used to translate
+  // cleared row indices into pixel positions for particle emission, since
+  // that math otherwise only exists inside BoardPainter's paint().
+  Size? _boardSize;
+
+  // Drives both the line-clear flash fade (spec.md 18: color flash fading
+  // over the same 120ms window) and the ±3px/2-cycle shake — starts at 1
+  // so the idle flashOpacity (`1 - value`) is 0 before any clear ever fires.
+  late final AnimationController _lineClearEffectController = AnimationController(
+    vsync: this,
+    duration: AppDurations.lineClearFlash,
+    value: 1,
+  );
+
+  // A separate, longer shake for Game Over (spec.md 7: "300 ms shake sutil
+  // del tablero"), reusing the same shake tween shape.
+  late final AnimationController _gameOverShakeController = AnimationController(
+    vsync: this,
+    duration: AppDurations.gameOverShake,
+  );
+
+  static final TweenSequence<double> _shakeTween = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 0.0, end: 3.0), weight: 1),
+    TweenSequenceItem(tween: Tween(begin: 3.0, end: -3.0), weight: 2),
+    TweenSequenceItem(tween: Tween(begin: -3.0, end: 3.0), weight: 2),
+    TweenSequenceItem(tween: Tween(begin: 3.0, end: 0.0), weight: 1),
+  ]);
 
   // The HUD's own live display, separate from GameController's internal
   // play-time accumulator (which persists correctly across resume for
@@ -83,7 +123,60 @@ class _GameScreenState extends ConsumerState<GameScreen>
       } else {
         _displayedElapsed = next;
       }
+      if (_particlePool.hasActiveParticles) {
+        _particlePool.update(delta.inMicroseconds / 1e6);
+        setState(() {});
+      }
     });
+  }
+
+  void _onLineClear(LineClearEvent event) {
+    final boardSize = _boardSize;
+    final visibleRows = event.clearedRowIndices
+        .map((row) => row - Board.hiddenRows)
+        .where((row) => row >= 0 && row < Board.visibleRows)
+        .toList();
+    if (boardSize != null && visibleRows.isNotEmpty) {
+      final geometry = BoardGeometry.of(boardSize);
+      _particlePool.emitForLineClear(
+        cellCentersX: List.generate(Board.columns, geometry.columnCenterX),
+        rowCentersY: visibleRows.map(geometry.rowCenterY).toList(),
+        linesCleared: event.linesCleared,
+      );
+    }
+    setState(() => _flashRows = visibleRows);
+    _lineClearEffectController.forward(from: 0);
+  }
+
+  void _pulseScore() {
+    setState(() => _scorePulse = true);
+    Future.delayed(AppDurations.scalePulseUp, () {
+      if (mounted) setState(() => _scorePulse = false);
+    });
+  }
+
+  void _onComboIncrease(int combo) {
+    if (widget.focusMode) {
+      setState(() => _showFocusComboGlow = true);
+      Future.delayed(AppDurations.focusLevelUpBorderFade, () {
+        if (mounted) setState(() => _showFocusComboGlow = false);
+      });
+      return;
+    }
+    setState(() {
+      _comboPopupValue = combo;
+      _showComboPopup = true;
+      _comboPulse = true;
+    });
+    Future.delayed(AppDurations.scalePulseUp, () {
+      if (mounted) setState(() => _comboPulse = false);
+    });
+    Future.delayed(
+      AppDurations.levelUpEnter + AppDurations.levelUpHold + AppDurations.levelUpExit,
+      () {
+        if (mounted) setState(() => _showComboPopup = false);
+      },
+    );
   }
 
   void _togglePause() {
@@ -139,6 +232,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ticker.stop();
+    _lineClearEffectController.dispose();
+    _gameOverShakeController.dispose();
     _audioService.pauseAmbient();
     super.dispose();
   }
@@ -152,8 +247,17 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   Widget build(BuildContext context) {
     ref.listen(gameControllerProvider, (previous, next) {
-      if (previous != null && next != null && next.level > previous.level) {
-        _onLevelUp();
+      if (previous == null || next == null) return;
+      if (next.level > previous.level) _onLevelUp();
+      if (next.score > previous.score) _pulseScore();
+      if (next.combo > previous.combo && next.combo >= 1) _onComboIncrease(next.combo);
+      if (next.status == GameStatus.gameOver && previous.status != GameStatus.gameOver) {
+        _gameOverShakeController.forward(from: 0);
+      }
+    });
+    ref.listen(lineClearEventControllerProvider, (previous, next) {
+      if (next != null && next.sequence != previous?.sequence) {
+        _onLineClear(next);
       }
     });
 
@@ -191,9 +295,14 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         onPressed: isGameOver ? null : _togglePause,
                       ),
                       if (!focusMode) Text('Nivel ${gameState.level}', style: theme.textTheme.titleMedium),
-                      Text(
-                        '${gameState.score}',
-                        style: focusMode ? theme.textTheme.labelSmall : theme.textTheme.titleMedium,
+                      AnimatedScale(
+                        scale: _scorePulse ? 1.15 : 1.0,
+                        duration: AppDurations.scalePulseUp,
+                        curve: Curves.easeOut,
+                        child: Text(
+                          '${gameState.score}',
+                          style: focusMode ? theme.textTheme.labelSmall : theme.textTheme.titleMedium,
+                        ),
                       ),
                     ],
                   ),
@@ -206,7 +315,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
                       children: [
                         Text('Líneas: ${gameState.totalLinesCleared}', style: theme.textTheme.bodyMedium),
                         if (gameState.combo >= 1)
-                          Text('Combo x${gameState.combo}', style: theme.textTheme.bodyMedium),
+                          AnimatedScale(
+                            scale: _comboPulse ? 1.15 : 1.0,
+                            duration: AppDurations.scalePulseUp,
+                            curve: Curves.easeOut,
+                            child: Text('Combo x${gameState.combo}', style: theme.textTheme.bodyMedium),
+                          ),
                         Text(_formatElapsed(_displayedElapsed), style: theme.textTheme.bodyMedium),
                       ],
                     ),
@@ -238,19 +352,42 @@ class _GameScreenState extends ConsumerState<GameScreen>
                             border: Border.all(
                               color: _showFocusLevelUpFlash
                                   ? AppColors.secondary
-                                  : Colors.transparent,
+                                  : _showFocusComboGlow
+                                      ? AppColors.primary
+                                      : Colors.transparent,
                               width: 3,
                             ),
                           ),
-                          child: CustomPaint(
-                            painter: BoardPainter(
-                              gameState: gameState,
-                              gridLineColor: gridLineColor,
-                              emptyCellColor: theme.colorScheme.surface,
-                              showGhost: settings.ghostPieceEnabled,
-                              focusMode: focusMode,
-                            ),
-                            child: const SizedBox.expand(),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              _boardSize = constraints.biggest;
+                              return AnimatedBuilder(
+                                animation: Listenable.merge([
+                                  _lineClearEffectController,
+                                  _gameOverShakeController,
+                                ]),
+                                builder: (context, child) {
+                                  final shakeDx = _shakeTween.evaluate(_lineClearEffectController) +
+                                      _shakeTween.evaluate(_gameOverShakeController);
+                                  return Transform.translate(
+                                    offset: Offset(shakeDx, 0),
+                                    child: CustomPaint(
+                                      painter: BoardPainter(
+                                        gameState: gameState,
+                                        gridLineColor: gridLineColor,
+                                        emptyCellColor: theme.colorScheme.surface,
+                                        showGhost: settings.ghostPieceEnabled,
+                                        focusMode: focusMode,
+                                        flashRows: _flashRows,
+                                        flashOpacity: 1 - _lineClearEffectController.value,
+                                        particles: _particlePool.activeParticles,
+                                      ),
+                                      child: const SizedBox.expand(),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -292,6 +429,32 @@ class _GameScreenState extends ConsumerState<GameScreen>
                       child: Text(
                         'Nivel ${gameState.level}',
                         style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textOnLight),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (!focusMode && _showComboPopup)
+              Positioned(
+                top: AppDimens.spacingXxxl + AppDimens.spacingXxxl,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: _showComboPopup ? 1 : 0,
+                    duration: AppDurations.levelUpEnter,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.spacingLg,
+                        vertical: AppDimens.spacingSm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      ),
+                      child: Text(
+                        'Combo x$_comboPopupValue',
+                        style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.textOnLight),
                       ),
                     ),
                   ),

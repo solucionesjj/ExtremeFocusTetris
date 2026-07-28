@@ -25,5 +25,9 @@ abstract final class AppDurations {
   static const Duration gameOverOverlay = Duration(milliseconds: 500);
   static const Duration gameOverShake = Duration(milliseconds: 300);
 
+  /// Half-leg of the score/combo scale pulse (spec.md section 18: full
+  /// 1.0→1.15→1.0 cycle is 120ms, split into two 60ms `AnimatedScale` legs).
+  static const Duration scalePulseUp = Duration(milliseconds: 60);
+
   static const Duration buttonPress = Duration(milliseconds: 100);
 }

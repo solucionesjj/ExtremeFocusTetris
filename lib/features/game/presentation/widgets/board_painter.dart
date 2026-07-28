@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/board.dart';
 import '../../domain/entities/game_state.dart';
 import '../../domain/entities/grid_position.dart';
 import '../../domain/entities/tetromino.dart';
 import '../../domain/usecases/hard_drop.dart';
+import '../effects/particle.dart';
+import 'board_geometry.dart';
 import 'tetromino_colors.dart';
 
 /// Renders the 10x20 visible playfield in a single [Canvas] pass — spec.md
@@ -19,31 +23,61 @@ class BoardPainter extends CustomPainter {
   final bool showGhost;
   final bool focusMode;
 
+  /// Cleared-row flash (spec.md section 18: "flash de color... shake
+  /// horizontal leve"), in visible-row coordinates (0..19). [flashOpacity]
+  /// is driven by the line-clear effect controller and fades to 0.
+  final List<int> flashRows;
+  final double flashOpacity;
+
+  /// A snapshot of currently-alive particles — see `ParticlePool`. Reading
+  /// this list is the only per-frame cost paid for particles when none are
+  /// alive, since [ParticlePool.activeParticles] is empty then.
+  final List<Particle> particles;
+
   BoardPainter({
     required this.gameState,
     required this.gridLineColor,
     required this.emptyCellColor,
     this.showGhost = true,
     this.focusMode = false,
+    this.flashRows = const [],
+    this.flashOpacity = 0,
+    this.particles = const [],
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cellSize = math.min(
-      size.width / Board.columns,
-      size.height / Board.visibleRows,
-    );
-    final boardWidth = cellSize * Board.columns;
-    final boardHeight = cellSize * Board.visibleRows;
-    final offset = Offset(
-      (size.width - boardWidth) / 2,
-      (size.height - boardHeight) / 2,
-    );
+    final geometry = BoardGeometry.of(size);
+    final cellSize = geometry.cellSize;
+    final offset = geometry.offset;
 
     _paintEmptyGrid(canvas, offset, cellSize);
     _paintLockedCells(canvas, offset, cellSize);
     if (showGhost) _paintGhost(canvas, offset, cellSize);
     _paintPiece(canvas, offset, cellSize, gameState.activePiece, opacity: 1);
+    if (flashOpacity > 0) _paintFlashRows(canvas, offset, cellSize);
+    if (particles.isNotEmpty) _paintParticles(canvas, cellSize);
+  }
+
+  void _paintFlashRows(Canvas canvas, Offset offset, double cellSize) {
+    final paint = Paint()..color = AppColors.fxSpecialStart.withValues(alpha: flashOpacity * 0.6);
+    for (final row in flashRows) {
+      canvas.drawRect(
+        Rect.fromLTWH(offset.dx, offset.dy + row * cellSize, cellSize * Board.columns, cellSize),
+        paint,
+      );
+    }
+  }
+
+  void _paintParticles(Canvas canvas, double cellSize) {
+    final radius = math.max(1.5, cellSize * 0.08);
+    for (final particle in particles) {
+      canvas.drawCircle(
+        Offset(particle.x, particle.y),
+        radius,
+        Paint()..color = AppColors.particles.withValues(alpha: particle.life.clamp(0, 1)),
+      );
+    }
   }
 
   void _paintEmptyGrid(Canvas canvas, Offset offset, double cellSize) {
@@ -129,6 +163,16 @@ class BoardPainter extends CustomPainter {
 
     canvas.drawRRect(rrect, Paint()..color = color.withValues(alpha: opacity));
     if (opacity == 1) {
+      // Diagonal top-light highlight — spec.md 18 "brillo... look caramelo".
+      canvas.drawRRect(
+        rrect,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white.withValues(alpha: 0.3), Colors.white.withValues(alpha: 0)],
+          ).createShader(rect),
+      );
       canvas.drawRRect(
         rrect,
         Paint()
@@ -143,5 +187,9 @@ class BoardPainter extends CustomPainter {
   bool shouldRepaint(covariant BoardPainter oldDelegate) =>
       !identical(oldDelegate.gameState, gameState) ||
       oldDelegate.showGhost != showGhost ||
-      oldDelegate.focusMode != focusMode;
+      oldDelegate.focusMode != focusMode ||
+      oldDelegate.flashOpacity != flashOpacity ||
+      !listEquals(oldDelegate.flashRows, flashRows) ||
+      particles.isNotEmpty ||
+      oldDelegate.particles.isNotEmpty;
 }

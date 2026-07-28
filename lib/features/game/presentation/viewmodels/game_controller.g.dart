@@ -6,7 +6,7 @@ part of 'game_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$gameControllerHash() => r'fdaa38feb76be032947ed9e716eab43e406062f5';
+String _$gameControllerHash() => r'89a06205ad88ced9c4829a8883849bb779ca8f40';
 
 /// Owns the in-progress [GameState] and the gravity / lock-delay bookkeeping
 /// that a real-time ticker (see `GameTickerService`) drives via [onTick].

@@ -61,6 +61,7 @@ void main() {
     expect(result.state.totalLinesCleared, 1);
     expect(result.state.combo, 0);
     expect(result.state.score, greaterThanOrEqualTo(100));
+    expect(result.outcome.clearedRowIndices, [21]);
     expect(result.outcome.linesCleared, 1);
   });
 

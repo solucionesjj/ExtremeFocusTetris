@@ -7,10 +7,16 @@ class LineClearOutcome {
   final TSpinType tSpinType;
   final bool isPerfectClear;
 
+  /// Board row indices that were cleared — lets the presentation layer
+  /// emit line-clear particles/flash at the right place (spec.md section
+  /// 18) without the domain knowing anything about rendering.
+  final List<int> clearedRowIndices;
+
   const LineClearOutcome({
     required this.linesCleared,
     required this.tSpinType,
     required this.isPerfectClear,
+    this.clearedRowIndices = const [],
   });
 
   /// A "difficult" clear (Tetris or any T-Spin that clears at least one

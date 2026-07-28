@@ -34,6 +34,7 @@ abstract final class LockActivePiece {
       linesCleared: resolved.clearedRows.length,
       tSpinType: tSpinType,
       isPerfectClear: resolved.board.isEmpty,
+      clearedRowIndices: resolved.clearedRows,
     );
 
     final scoreResult = CalculateScore.call(

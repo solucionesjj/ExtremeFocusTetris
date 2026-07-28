@@ -16,6 +16,7 @@ import '../../domain/usecases/lock_active_piece.dart';
 import '../../domain/usecases/move_piece.dart';
 import '../../domain/usecases/rotate_piece.dart';
 import '../../domain/usecases/start_new_game.dart';
+import 'line_clear_event_controller.dart';
 
 part 'game_controller.g.dart';
 
@@ -214,6 +215,10 @@ class GameController extends _$GameController {
       haptics.onLineClear();
     }
     if (outcome.isPerfectClear) _sessionPerfectClears++;
+
+    if (outcome.linesCleared > 0) {
+      ref.read(lineClearEventControllerProvider.notifier).emit(outcome.clearedRowIndices);
+    }
 
     if (result.state.level > previousState.level) {
       _playSfx(SfxEvent.levelUp);
