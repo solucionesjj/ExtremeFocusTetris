@@ -17,12 +17,14 @@ class BoardPainter extends CustomPainter {
   final Color gridLineColor;
   final Color emptyCellColor;
   final bool showGhost;
+  final bool focusMode;
 
   BoardPainter({
     required this.gameState,
     required this.gridLineColor,
     required this.emptyCellColor,
     this.showGhost = true,
+    this.focusMode = false,
   });
 
   @override
@@ -74,7 +76,15 @@ class BoardPainter extends CustomPainter {
       for (var col = 0; col < Board.columns; col++) {
         final type = gameState.board.cellAt(GridPosition(row, col));
         if (type == null) continue;
-        _paintCell(canvas, offset, cellSize, row - Board.hiddenRows, col, colorForTetromino(type), opacity: 1);
+        _paintCell(
+          canvas,
+          offset,
+          cellSize,
+          row - Board.hiddenRows,
+          col,
+          colorForTetromino(type, focusMode: focusMode),
+          opacity: 1,
+        );
       }
     }
   }
@@ -92,7 +102,7 @@ class BoardPainter extends CustomPainter {
     Tetromino piece, {
     required double opacity,
   }) {
-    final color = colorForTetromino(piece.type);
+    final color = colorForTetromino(piece.type, focusMode: focusMode);
     for (final cell in piece.occupiedCells) {
       if (cell.row < Board.hiddenRows) continue;
       _paintCell(canvas, offset, cellSize, cell.row - Board.hiddenRows, cell.col, color, opacity: opacity);
@@ -131,5 +141,7 @@ class BoardPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BoardPainter oldDelegate) =>
-      !identical(oldDelegate.gameState, gameState) || oldDelegate.showGhost != showGhost;
+      !identical(oldDelegate.gameState, gameState) ||
+      oldDelegate.showGhost != showGhost ||
+      oldDelegate.focusMode != focusMode;
 }

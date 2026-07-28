@@ -18,6 +18,10 @@ abstract final class AppDurations {
   static const Duration levelUpHold = Duration(milliseconds: 500);
   static const Duration levelUpExit = Duration(milliseconds: 200);
 
+  /// Focus Mode's subtler stand-in for the Classic level-up banner — a
+  /// brief tint fade on the board's border — spec.md section 9.2.
+  static const Duration focusLevelUpBorderFade = Duration(milliseconds: 400);
+
   static const Duration gameOverOverlay = Duration(milliseconds: 500);
   static const Duration gameOverShake = Duration(milliseconds: 300);
 

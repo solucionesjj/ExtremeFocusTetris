@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_dimens.dart';
+import '../../../core/constants/app_durations.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../../../core/routing/routes.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/services/game_ticker_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../settings/presentation/viewmodels/settings_controller.dart';
 import '../domain/entities/game_status.dart';
 import 'viewmodels/game_controller.dart';
@@ -18,7 +20,10 @@ import 'widgets/touch_controls.dart';
 
 /// The Game screen — board, HUD, controls, and the Pause/Game Over
 /// overlays (spec.md section 10.2). Reached by pushing [Routes.game] with
-/// a `({bool focusMode, bool resume})` record as `extra`.
+/// a `({bool focusMode, bool resume})` record as `extra`. In Focus Mode
+/// (spec.md section 9.2) the HUD shrinks to board + 1 next piece + a
+/// discrete timer, the block palette desaturates, UI SFX are quieter, and
+/// a level-up is a border tint instead of a banner.
 class GameScreen extends ConsumerStatefulWidget {
   final bool focusMode;
   final bool resume;
@@ -33,6 +38,17 @@ class _GameScreenState extends ConsumerState<GameScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final GameTickerService _ticker = GameTickerService();
   bool _isPaused = false;
+  bool _showLevelUpBanner = false;
+  bool _showFocusLevelUpFlash = false;
+
+  // The HUD's own live display, separate from GameController's internal
+  // play-time accumulator (which persists correctly across resume for
+  // stats purposes) — this one simply restarts at 0:00 each time the
+  // screen mounts, whether that's a new game or a resumed one. Spec.md
+  // marks the Focus Mode timer itself as optional, so this simplification
+  // is intentional rather than an oversight — see AGENT.md.
+  Duration _displayedElapsed = Duration.zero;
+
   // Captured once so dispose() never touches `ref` — Riverpod forbids
   // reading providers after the element is disposed, and during a full
   // widget-tree teardown dispose() can run after that point.
@@ -61,6 +77,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   void _startTicker() {
     _ticker.start(this, (delta) {
       ref.read(gameControllerProvider.notifier).onTick(delta);
+      final next = _displayedElapsed + delta;
+      if (next.inSeconds != _displayedElapsed.inSeconds) {
+        setState(() => _displayedElapsed = next);
+      } else {
+        _displayedElapsed = next;
+      }
     });
   }
 
@@ -76,9 +98,29 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   void _restart() {
-    setState(() => _isPaused = false);
+    setState(() {
+      _isPaused = false;
+      _displayedElapsed = Duration.zero;
+    });
     ref.read(gameControllerProvider.notifier).startNewGame(focusMode: widget.focusMode);
     if (!_ticker.isRunning) _startTicker();
+  }
+
+  void _onLevelUp() {
+    if (widget.focusMode) {
+      setState(() => _showFocusLevelUpFlash = true);
+      Future.delayed(AppDurations.focusLevelUpBorderFade, () {
+        if (mounted) setState(() => _showFocusLevelUpFlash = false);
+      });
+    } else {
+      setState(() => _showLevelUpBanner = true);
+      Future.delayed(
+        AppDurations.levelUpEnter + AppDurations.levelUpHold + AppDurations.levelUpExit,
+        () {
+          if (mounted) setState(() => _showLevelUpBanner = false);
+        },
+      );
+    }
   }
 
   @override
@@ -101,12 +143,25 @@ class _GameScreenState extends ConsumerState<GameScreen>
     super.dispose();
   }
 
+  String _formatElapsed(Duration d) {
+    final minutes = d.inMinutes.remainder(100).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(gameControllerProvider, (previous, next) {
+      if (previous != null && next != null && next.level > previous.level) {
+        _onLevelUp();
+      }
+    });
+
     final gameState = ref.watch(gameControllerProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final showGhost = ref.watch(settingsControllerProvider).ghostPieceEnabled;
+    final settings = ref.watch(settingsControllerProvider);
+    final focusMode = widget.focusMode;
 
     if (gameState == null) {
       return const Scaffold(body: SizedBox.shrink());
@@ -135,36 +190,77 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         icon: const Icon(Icons.pause),
                         onPressed: isGameOver ? null : _togglePause,
                       ),
-                      Text('Nivel ${gameState.level}', style: theme.textTheme.titleMedium),
-                      Text('${gameState.score}', style: theme.textTheme.titleMedium),
+                      if (!focusMode) Text('Nivel ${gameState.level}', style: theme.textTheme.titleMedium),
+                      Text(
+                        '${gameState.score}',
+                        style: focusMode ? theme.textTheme.labelSmall : theme.textTheme.titleMedium,
+                      ),
                     ],
                   ),
                 ),
+                if (!focusMode)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.spacingLg),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Líneas: ${gameState.totalLinesCleared}', style: theme.textTheme.bodyMedium),
+                        if (gameState.combo >= 1)
+                          Text('Combo x${gameState.combo}', style: theme.textTheme.bodyMedium),
+                        Text(_formatElapsed(_displayedElapsed), style: theme.textTheme.bodyMedium),
+                      ],
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.spacingLg),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(_formatElapsed(_displayedElapsed), style: theme.textTheme.labelSmall),
+                    ),
+                  ),
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(AppDimens.spacingMd),
-                        child: HoldWidget(
-                          holdPiece: gameState.holdPiece,
-                          isUsed: gameState.holdUsed,
-                        ),
-                      ),
-                      Expanded(
-                        child: CustomPaint(
-                          painter: BoardPainter(
-                            gameState: gameState,
-                            gridLineColor: gridLineColor,
-                            emptyCellColor: theme.colorScheme.surface,
-                            showGhost: showGhost,
+                      if (!focusMode)
+                        Padding(
+                          padding: const EdgeInsets.all(AppDimens.spacingMd),
+                          child: HoldWidget(
+                            holdPiece: gameState.holdPiece,
+                            isUsed: gameState.holdUsed,
                           ),
-                          child: const SizedBox.expand(),
+                        ),
+                      Expanded(
+                        child: AnimatedContainer(
+                          duration: AppDurations.focusLevelUpBorderFade,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: _showFocusLevelUpFlash
+                                  ? AppColors.secondary
+                                  : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          child: CustomPaint(
+                            painter: BoardPainter(
+                              gameState: gameState,
+                              gridLineColor: gridLineColor,
+                              emptyCellColor: theme.colorScheme.surface,
+                              showGhost: settings.ghostPieceEnabled,
+                              focusMode: focusMode,
+                            ),
+                            child: const SizedBox.expand(),
+                          ),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(AppDimens.spacingMd),
-                        child: NextQueueWidget(upcoming: gameState.nextQueue),
+                        child: NextQueueWidget(
+                          upcoming: gameState.nextQueue,
+                          visibleCount: focusMode ? 1 : 3,
+                          focusMode: focusMode,
+                        ),
                       ),
                     ],
                   ),
@@ -175,6 +271,32 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 ),
               ],
             ),
+            if (!focusMode && _showLevelUpBanner)
+              Positioned(
+                top: AppDimens.spacingXxxl,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: _showLevelUpBanner ? 1 : 0,
+                    duration: AppDurations.levelUpEnter,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.spacingXl,
+                        vertical: AppDimens.spacingMd,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      ),
+                      child: Text(
+                        'Nivel ${gameState.level}',
+                        style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textOnLight),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (_isPaused)
               _OverlayScrim(
                 title: l10n.gamePauseTitle,

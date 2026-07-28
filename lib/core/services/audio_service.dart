@@ -89,12 +89,16 @@ class AudioService {
     }
   }
 
-  Future<void> playSfx(SfxEvent event) async {
+  /// [volumeMultiplier] lets callers attenuate a specific playback (e.g.
+  /// Focus Mode's -6dB UI SFX reduction, spec.md section 9.2 — a factor of
+  /// ~0.5 is roughly -6dB) without touching the user's configured
+  /// [sfxVolume] setting.
+  Future<void> playSfx(SfxEvent event, {double volumeMultiplier = 1.0}) async {
     if (!soundEnabled) return;
     final player = _sfxPool[_nextSfxSlot];
     _nextSfxSlot = (_nextSfxSlot + 1) % _sfxPool.length;
     await player.stop();
-    await player.setVolume(sfxVolume);
+    await player.setVolume((sfxVolume * volumeMultiplier).clamp(0.0, 1.0));
     await player.play(AssetSource(event._assetPath));
   }
 

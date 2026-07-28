@@ -37,6 +37,14 @@ class GameController extends _$GameController {
   bool _softDropHeld = false;
   bool focusMode = false;
 
+  /// Focus Mode attenuates UI SFX by roughly -6dB so the ambient tic-toc
+  /// stays the dominant sound — spec.md section 9.2.
+  static const double _focusModeSfxAttenuation = 0.5;
+
+  void _playSfx(SfxEvent event) => ref
+      .read(audioServiceProvider)
+      .playSfx(event, volumeMultiplier: focusMode ? _focusModeSfxAttenuation : 1.0);
+
   // Per-game tallies for the Statistics screen (spec.md 8.9) — the
   // session snapshot itself doesn't carry these (spec.md 13 only lists
   // board/piece/score/level/time), so a resumed game's pre-pause tallies
@@ -105,7 +113,7 @@ class GameController extends _$GameController {
   /// hold begins, not on every accelerated cell.
   void setSoftDropHeld(bool held) {
     if (held && !_softDropHeld) {
-      ref.read(audioServiceProvider).playSfx(SfxEvent.softDrop);
+      _playSfx(SfxEvent.softDrop);
     }
     _softDropHeld = held;
   }
@@ -117,7 +125,7 @@ class GameController extends _$GameController {
     _fallAccumulator = Duration.zero;
     _lockDelayAccumulator = Duration.zero;
 
-    ref.read(audioServiceProvider).playSfx(SfxEvent.hardDrop);
+    _playSfx(SfxEvent.hardDrop);
     ref.read(hapticServiceProvider).onLock();
 
     final result = HardDrop.call(current, _random);
@@ -132,9 +140,9 @@ class GameController extends _$GameController {
     final result = HoldPiece.call(current, _random);
     if (!identical(result, current)) {
       _lockDelayAccumulator = Duration.zero;
-      ref.read(audioServiceProvider).playSfx(SfxEvent.hold);
+      _playSfx(SfxEvent.hold);
       if (result.status == GameStatus.gameOver) {
-        ref.read(audioServiceProvider).playSfx(SfxEvent.gameOver);
+        _playSfx(SfxEvent.gameOver);
         ref.read(hapticServiceProvider).onGameOver();
         _onGameEnded(result);
       }
@@ -187,13 +195,12 @@ class GameController extends _$GameController {
   }
 
   void _reactToLockOutcome(LockResult result, GameState previousState) {
-    final audio = ref.read(audioServiceProvider);
     final haptics = ref.read(hapticServiceProvider);
     final outcome = result.outcome;
 
     if (outcome.tSpinType != TSpinType.none) {
       _sessionTSpins++;
-      audio.playSfx(SfxEvent.tSpin);
+      _playSfx(SfxEvent.tSpin);
       haptics.onLineClear();
     } else if (outcome.linesCleared > 0) {
       final sfx = switch (outcome.linesCleared) {
@@ -203,17 +210,17 @@ class GameController extends _$GameController {
         _ => SfxEvent.lineClearTetris,
       };
       if (outcome.linesCleared == 4) _sessionTetrises++;
-      audio.playSfx(sfx);
+      _playSfx(sfx);
       haptics.onLineClear();
     }
     if (outcome.isPerfectClear) _sessionPerfectClears++;
 
     if (result.state.level > previousState.level) {
-      audio.playSfx(SfxEvent.levelUp);
+      _playSfx(SfxEvent.levelUp);
     }
 
     if (result.state.status == GameStatus.gameOver) {
-      audio.playSfx(SfxEvent.gameOver);
+      _playSfx(SfxEvent.gameOver);
       haptics.onGameOver();
       _onGameEnded(result.state);
     }
@@ -243,7 +250,7 @@ class GameController extends _$GameController {
 
     final result = action(current);
     if (!identical(result, current)) {
-      ref.read(audioServiceProvider).playSfx(sfx);
+      _playSfx(sfx);
       switch (haptic) {
         case _HapticKind.move:
           ref.read(hapticServiceProvider).onMove();
