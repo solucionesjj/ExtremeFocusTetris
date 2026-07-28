@@ -1,0 +1,27 @@
+name: extreme_focus_tetris
+description: "Extreme Focus Tetris — personal deep-focus Tetris for Android."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  riverpod_generator: ^2.6.5
+  build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
+  generate: true

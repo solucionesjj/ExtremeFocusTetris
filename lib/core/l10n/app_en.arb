@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "Extreme Focus Tetris",
+  "@appTitle": {
+    "description": "Application name, shown in the OS task switcher and splash screen"
+  },
+  "homeScaffoldPlaceholder": "Home screen coming soon",
+  "@homeScaffoldPlaceholder": {
+    "description": "Temporary placeholder shown on the app's initial screen until the Home feature (roadmap Phase 4) is implemented"
+  }
+}
