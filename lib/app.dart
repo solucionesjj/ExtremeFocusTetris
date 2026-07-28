@@ -5,6 +5,7 @@ import 'core/di/providers.dart';
 import 'core/l10n/generated/app_localizations.dart';
 import 'core/theme/app_theme_dark.dart';
 import 'core/theme/app_theme_light.dart';
+import 'features/game/presentation/game_screen.dart';
 
 class ExtremeFocusTetrisApp extends ConsumerWidget {
   const ExtremeFocusTetrisApp({super.key});
@@ -28,7 +29,9 @@ class ExtremeFocusTetrisApp extends ConsumerWidget {
   }
 }
 
-/// Stand-in for the Home screen until roadmap Phase 4 (Pantallas y navegación).
+/// Stand-in for the Home screen until roadmap Phase 4 (Pantallas y
+/// navegación) wires up go_router; the "Jugar (debug)" button is a
+/// temporary way to reach [GameScreen] while it's being built in Phase 2.
 class _HomePlaceholder extends StatelessWidget {
   const _HomePlaceholder();
 
@@ -37,10 +40,24 @@ class _HomePlaceholder extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Center(
-        child: Text(
-          l10n.homeScaffoldPlaceholder,
-          style: Theme.of(context).textTheme.headlineMedium,
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.homeScaffoldPlaceholder,
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GameScreen()),
+                );
+              },
+              child: const Text('Jugar (debug)'),
+            ),
+          ],
         ),
       ),
     );

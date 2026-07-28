@@ -1,8 +1,10 @@
 import 'dart:math';
 
+import '../entities/board.dart';
 import '../entities/game_state.dart';
 import '../entities/game_status.dart';
 import '../entities/grid_position.dart';
+import '../entities/tetromino.dart';
 import 'calculate_score.dart';
 import 'lock_active_piece.dart';
 
@@ -12,23 +14,31 @@ abstract final class HardDrop {
   static GameState call(GameState state, Random random) {
     if (state.status == GameStatus.gameOver) return state;
 
-    var piece = state.activePiece;
-    var cellsTravelled = 0;
-    while (true) {
-      final candidate = piece.copyWith(
-        origin: piece.origin + const GridPosition(1, 0),
-      );
-      if (!state.board.canPlace(candidate)) break;
-      piece = candidate;
-      cellsTravelled++;
-    }
+    final landing = _lowestValidPosition(state.board, state.activePiece);
+    final cellsTravelled = landing.origin.row - state.activePiece.origin.row;
 
     final droppedState = state.copyWith(
-      activePiece: piece,
+      activePiece: landing,
       score: state.score + CalculateScore.hardDropPoints(cellsTravelled),
       lastActionWasRotation: false,
     );
 
     return LockActivePiece.call(droppedState, random);
+  }
+
+  /// The silhouette position the active piece would land on right now,
+  /// without mutating any state — used to render the ghost piece.
+  static Tetromino ghostPiece(GameState state) =>
+      _lowestValidPosition(state.board, state.activePiece);
+
+  static Tetromino _lowestValidPosition(Board board, Tetromino piece) {
+    var current = piece;
+    while (true) {
+      final candidate = current.copyWith(
+        origin: current.origin + const GridPosition(1, 0),
+      );
+      if (!board.canPlace(candidate)) return current;
+      current = candidate;
+    }
   }
 }

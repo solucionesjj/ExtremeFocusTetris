@@ -71,6 +71,31 @@ void main() {
     });
   });
 
+  group('gravityStep', () {
+    test('moves down one row and never awards points, unlike softDrop', () {
+      final piece = const Tetromino(type: TetrominoType.o, rotation: RotationState.spawn, origin: GridPosition(0, 4));
+      final state = _stateWith(piece);
+
+      final moved = MovePiece.gravityStep(state);
+
+      expect(moved.activePiece.origin, const GridPosition(1, 4));
+      expect(moved.score, 0);
+    });
+
+    test('is a no-op once the piece is resting on the floor', () {
+      final piece = const Tetromino(
+        type: TetrominoType.o,
+        rotation: RotationState.spawn,
+        origin: GridPosition(Board.totalRows - 2, 4),
+      );
+      final state = _stateWith(piece);
+
+      final moved = MovePiece.gravityStep(state);
+
+      expect(moved.activePiece.origin, piece.origin);
+    });
+  });
+
   group('canMoveDown', () {
     test('is false when resting on the floor', () {
       final piece = const Tetromino(

@@ -89,4 +89,30 @@ void main() {
 
     expect(result.status, GameStatus.gameOver);
   });
+
+  group('ghostPiece', () {
+    test('reports the landing position without mutating the game state', () {
+      final piece = const Tetromino(type: TetrominoType.o, rotation: RotationState.spawn, origin: GridPosition(0, 4));
+      final state = _emptyGameAt(piece);
+
+      final ghost = HardDrop.ghostPiece(state);
+
+      expect(ghost.origin, const GridPosition(Board.totalRows - 2, 4));
+      // The real active piece never moved.
+      expect(state.activePiece.origin, piece.origin);
+    });
+
+    test('lands on top of existing stacked cells', () {
+      var board = Board.empty();
+      board = board.lockPiece(
+        const Tetromino(type: TetrominoType.o, rotation: RotationState.spawn, origin: GridPosition(20, 4)),
+      );
+      final piece = const Tetromino(type: TetrominoType.o, rotation: RotationState.spawn, origin: GridPosition(0, 4));
+      final state = _emptyGameAt(piece, board: board);
+
+      final ghost = HardDrop.ghostPiece(state);
+
+      expect(ghost.origin, const GridPosition(18, 4));
+    });
+  });
 }

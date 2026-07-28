@@ -21,7 +21,18 @@ Guía operativa para agentes de IA (Claude Code, Cursor, Aider, Copilot, etc.) q
 - **Gap de spec corregido:** la tabla de puntaje (`spec.md` §8.5) no tenía filas para T-Spin Mini Single/Double (200×nivel / 400×nivel), que sí ocurren en juego real — se agregaron.
 - **Testing:** `test/unit/game/` cubre rotación SRS + wall kicks, colisiones/clear de líneas de `Board`, detección de T-Spin (full/mini/none), 7-bag (permutación + gap máximo de 12 piezas), curva de nivel/velocidad (incluyendo tope de Modo Concentración), scoring completo (combo, back-to-back, perfect clear, soft/hard drop), hold, y el pipeline hard-drop→lock→resolve→spawn (incluye game over). 65 tests, todos en verde; `flutter analyze` sin issues.
 
-**Pendiente aún:** `core/routing` (`go_router`, Fase 4), `core/services` (Fase 2/3/5), `core/error`/`core/utils`, la capa `data`/`presentation` de `features/game` y todas las demás carpetas bajo `lib/features/` — se crean cuando su fase respectiva empieza, no antes. La siguiente fase del roadmap es la **Fase 2** (renderizado e input).
+**Fase 2 (Renderizado e input) completada.** Verificado de punta a punta en el emulador Android (build, HUD, gravedad, ghost piece, stack, Game Over).
+
+- `lib/core/services/game_ticker_service.dart` — wrapper de `Ticker` (requiere un `vsync` de un widget; el service en sí es agnóstico de widget).
+- `lib/features/game/presentation/viewmodels/game_controller.dart` — `Notifier<GameState?>` (Riverpod codegen) que orquesta gravedad (según `LevelCurve`, con multiplicador ×20 mientras se mantiene soft drop), el presupuesto de lock delay (500ms, tope de 15 resets ya validado por el dominio), y delega cada acción a los use cases de la Fase 1. `focusMode` es un campo simple en memoria por ahora (se conectará a Settings en fases futuras).
+- `lib/features/game/presentation/widgets/`: `board_painter.dart` (`CustomPainter` de una sola pasada: grid + celdas fijas + ghost + pieza activa, `shouldRepaint` por identidad de `GameState`), `tetromino_colors.dart` (mapeo color↔tipo compartido), `next_queue_widget.dart`, `hold_widget.dart`, `touch_controls.dart` (DAS 170ms/ARR 30ms en izquierda-derecha, soft drop como "press and hold", rotar/hold/hard-drop de un solo tap).
+- `lib/features/game/presentation/game_screen.dart` — `ConsumerStatefulWidget` con `SingleTickerProviderStateMixin` que arranca partida y ticker.
+- **Adiciones al dominio que exigió esta fase:** `MovePiece.gravityStep` (caída automática sin puntaje, distinta de `softDrop`) y `HardDrop.ghostPiece` (posición de aterrizaje sin mutar estado, reutilizando la lógica de `HardDrop.call`). Ambas con tests nuevos en `test/unit/game/`.
+- **Bug real encontrado y corregido en el emulador:** llamar `startNewGame()` directamente en `initState()` viola la regla de Riverpod de no modificar un provider mientras el árbol de widgets está construyéndose (`Tried to modify a provider while the widget tree was building`). Se resolvió difiriendo la llamada con `Future.microtask(...)`. Si se agregan más pantallas que arrancan un provider al montar, replicar este patrón (o usar `ref.listenManual`/`addPostFrameCallback`).
+- Acceso temporal: `_HomePlaceholder` en `app.dart` tiene un botón "Jugar (debug)" con `Navigator.push` directo a `GameScreen` — se reemplaza por la navegación real de `go_router` en la Fase 4.
+- **Testing:** 69 tests en verde (65 de la Fase 1 + 4 nuevos), `flutter analyze` sin issues.
+
+**Pendiente aún:** `core/routing` (`go_router`, Fase 4), `core/services` de audio/háptica (Fase 3), `core/error`/`core/utils`, la capa `data` de `features/game` (Fase 5) y todas las demás carpetas bajo `lib/features/` — se crean cuando su fase respectiva empieza, no antes. La siguiente fase del roadmap es la **Fase 3** (audio y háptica).
 
 ### Nota de versiones (importante para no repetir el error)
 

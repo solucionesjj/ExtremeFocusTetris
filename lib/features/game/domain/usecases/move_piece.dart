@@ -19,6 +19,11 @@ abstract final class MovePiece {
     return moved.copyWith(score: moved.score + CalculateScore.softDropPoints(1));
   }
 
+  /// The automatic, ticker-driven downward step — unlike [softDrop], this
+  /// never awards points (only a player-initiated soft drop scores).
+  static GameState gravityStep(GameState state) =>
+      _translate(state, const GridPosition(1, 0));
+
   static bool canMoveDown(GameState state) {
     final candidate = state.activePiece.copyWith(
       origin: state.activePiece.origin + const GridPosition(1, 0),
