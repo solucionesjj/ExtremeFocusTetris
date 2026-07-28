@@ -10,12 +10,17 @@ import 'detect_tspin.dart';
 import 'level_curve.dart';
 import 'resolve_line_clears.dart';
 
+/// The new [GameState] after a lock, plus what the lock produced — the
+/// presentation layer needs [outcome] to pick the right sound/haptic (line
+/// clear, T-Spin, Perfect Clear) instead of re-deriving it from a state diff.
+typedef LockResult = ({GameState state, LineClearOutcome outcome});
+
 /// The Locking → Resolving → LineClear → Spawning pipeline from the game
 /// state machine (spec.md section 8.10): fixes the active piece onto the
 /// board, clears completed rows, scores the result, advances the level,
 /// and spawns the next piece — or ends the game if it can't fit.
 abstract final class LockActivePiece {
-  static GameState call(GameState state, Random random) {
+  static LockResult call(GameState state, Random random) {
     final tSpinType = DetectTSpin.call(
       board: state.board,
       piece: state.activePiece,
@@ -50,7 +55,7 @@ abstract final class LockActivePiece {
       random,
     );
 
-    return state.copyWith(
+    final newState = state.copyWith(
       board: resolved.board,
       activePiece: canSpawn ? spawned : state.activePiece,
       nextQueue: remainingQueue,
@@ -64,5 +69,7 @@ abstract final class LockActivePiece {
       lastActionWasRotation: false,
       lockResetCount: 0,
     );
+
+    return (state: newState, outcome: outcome);
   }
 }

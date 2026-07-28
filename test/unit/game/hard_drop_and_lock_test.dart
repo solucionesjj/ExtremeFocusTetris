@@ -34,10 +34,11 @@ void main() {
 
     final result = HardDrop.call(state, Random(1));
 
-    expect(result.score, cellsToFloor * 2);
-    expect(result.activePiece.type, TetrominoType.o); // next in queue
-    expect(result.holdUsed, isFalse);
-    expect(result.status, GameStatus.playing);
+    expect(result.state.score, cellsToFloor * 2);
+    expect(result.state.activePiece.type, TetrominoType.o); // next in queue
+    expect(result.state.holdUsed, isFalse);
+    expect(result.state.status, GameStatus.playing);
+    expect(result.outcome.linesCleared, 0);
   });
 
   test('clearing a Single at level 1 awards 100 points and advances the line count', () {
@@ -57,9 +58,10 @@ void main() {
     final result = HardDrop.call(state, Random(1));
 
     // 100 (Single) + hard-drop travel points; travel is asserted loosely.
-    expect(result.totalLinesCleared, 1);
-    expect(result.combo, 0);
-    expect(result.score, greaterThanOrEqualTo(100));
+    expect(result.state.totalLinesCleared, 1);
+    expect(result.state.combo, 0);
+    expect(result.state.score, greaterThanOrEqualTo(100));
+    expect(result.outcome.linesCleared, 1);
   });
 
   test('locking into a full spawn area ends the game', () {
@@ -87,7 +89,7 @@ void main() {
 
     final result = HardDrop.call(state, Random(1));
 
-    expect(result.status, GameStatus.gameOver);
+    expect(result.state.status, GameStatus.gameOver);
   });
 
   group('ghostPiece', () {

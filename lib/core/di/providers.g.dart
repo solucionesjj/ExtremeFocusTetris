@@ -6,6 +6,46 @@ part of 'providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+String _$audioServiceHash() => r'010adb07618eeb58ad083f9a779873d496d836ee';
+
+/// A single, app-lifetime [AudioService] instance — spec.md section 6.
+/// `keepAlive` because it owns real player resources that must survive
+/// even when nothing is currently watching it.
+///
+/// Copied from [audioService].
+@ProviderFor(audioService)
+final audioServiceProvider = Provider<AudioService>.internal(
+  audioService,
+  name: r'audioServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$audioServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AudioServiceRef = ProviderRef<AudioService>;
+String _$hapticServiceHash() => r'537e7497e0ed36555af69b5b37e9056e25dbbbfd';
+
+/// A single, app-lifetime [HapticService] instance — spec.md section 6.4.
+///
+/// Copied from [hapticService].
+@ProviderFor(hapticService)
+final hapticServiceProvider = Provider<HapticService>.internal(
+  hapticService,
+  name: r'hapticServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$hapticServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef HapticServiceRef = ProviderRef<HapticService>;
 String _$themeModeControllerHash() =>
     r'3fd074bdab79b50e81defa1df7d3660d37c5bed5';
 

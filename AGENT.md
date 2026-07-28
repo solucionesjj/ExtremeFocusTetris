@@ -32,7 +32,23 @@ Guía operativa para agentes de IA (Claude Code, Cursor, Aider, Copilot, etc.) q
 - Acceso temporal: `_HomePlaceholder` en `app.dart` tiene un botón "Jugar (debug)" con `Navigator.push` directo a `GameScreen` — se reemplaza por la navegación real de `go_router` en la Fase 4.
 - **Testing:** 69 tests en verde (65 de la Fase 1 + 4 nuevos), `flutter analyze` sin issues.
 
-**Pendiente aún:** `core/routing` (`go_router`, Fase 4), `core/services` de audio/háptica (Fase 3), `core/error`/`core/utils`, la capa `data` de `features/game` (Fase 5) y todas las demás carpetas bajo `lib/features/` — se crean cuando su fase respectiva empieza, no antes. La siguiente fase del roadmap es la **Fase 3** (audio y háptica).
+**Fase 3 (Audio y háptica) completada en código; verificación en emulador bloqueada por el entorno (ver nota abajo).**
+
+- `assets/audio/ambient/tic_toc_loop.ogg` + `assets/audio/sfx/*.ogg` (13 archivos) — generados con `ffmpeg` (tonos sintetizados simples) como **placeholders funcionales para poder cablear e integrar el `AudioService` real**; no son diseño de sonido final. Reemplazar cuando exista un Game/Sound Designer real trabajando el carácter sonoro de spec.md §6. El script que los generó no se conserva en el repo (fue un script de un solo uso en el scratchpad de la sesión); si hace falta regenerarlos, cualquier tono corto en .ogg sirve como placeholder mientras tanto.
+- `lib/core/services/audio_service.dart` — `SfxEvent` enum (13 valores → 13 assets), un `AudioPlayer` dedicado al loop ambiental (`ReleaseMode.loop`) + pool round-robin de 4 para SFX solapables, volumen independiente ambiente/SFX, toggle general.
+- `lib/core/services/haptic_service.dart` — `HapticFeedback` nativo mapeado 1:1 a la tabla de spec.md §6.4 (sin el paquete `vibration`).
+- `lib/core/di/providers.dart` — `audioServiceProvider`/`hapticServiceProvider`, ambos `@Riverpod(keepAlive: true)` (deben sobrevivir aunque nada los esté observando).
+- `GameController` dispara sonido+háptica en cada acción exitosa (move/rotate/hold) y en el resultado de cada bloqueo (línea/T-Spin/nivel/game over) vía el nuevo tipo `LockResult` (`{state, outcome}`) que ahora devuelven `LockActivePiece.call` y `HardDrop.call` — antes devolvían solo `GameState`; si tocas esos dos use cases, ten presente esta firma.
+- `GameScreen` observa `AppLifecycleState` (`WidgetsBindingObserver`) para pausar/reanudar el loop ambiental en segundo plano, por spec.md §6.2.
+- **Bug real encontrado y corregido antes de siquiera llegar al emulador:** en el primer borrador de `hardDrop()` en `GameController` se llamaba `LockActivePiece.call` una segunda vez sobre el resultado de `HardDrop.call` (que ya bloquea internamente) — habría bloqueado instantáneamente la pieza siguiente también. Detectado por inspección de código antes de correr nada.
+- Configuración/volumen (activar sonido, volumen ambiente/SFX, vibración) vive por ahora solo como campos mutables en los servicios, sin providers de "settings" dedicados — se conectan a una UI real recién en la Fase 4 (pantalla Settings) y se persisten en la Fase 5 (Hive). Evitar construir esa capa de settings antes de tiempo (YAGNI).
+- **Testing:** `flutter analyze`/`flutter test` siguen en verde (69 tests); no se agregaron tests unitarios para `AudioService`/`HapticService` en sí (dependen de plugins de plataforma vía method channels — mockearlos con sentido pertenece a la Fase 9, no a esta).
+
+### Nota: verificación visual en emulador bloqueada (entorno, no código)
+
+Al probar la Fase 3 en el emulador Android, el input táctil (`adb shell input tap`/`swipe`) dejó de llegar a la app — confirmado que **no es un bug de este proyecto**: ni siquiera gestos a nivel de sistema (abrir la bandeja de notificaciones, tocar un ícono del launcher) funcionaban, incluso después de reiniciar `adb`, forzar el cierre de la app, y hacer un **cold boot completo del emulador sin snapshot** (`emulator -no-snapshot-load`). `flutter analyze` y los 69 tests automatizados sí pasan. Antes de continuar a la Fase 4, alguien debe: (a) probar en un emulador nuevo/dispositivo físico, o (b) revisar la configuración de aceleración gráfica/input del AVD `Pixel_3a_API_34_extension_level_7_arm64-v8a`. No asumir que el código de audio/háptica está "sin probar en dispositivo real" — sí lo está, solo que no pudo confirmarse visualmente en esta sesión.
+
+**Pendiente aún:** `core/routing` (`go_router`, Fase 4), `core/error`/`core/utils`, la capa `data` de `features/game` (Fase 5) y todas las demás carpetas bajo `lib/features/` — se crean cuando su fase respectiva empieza, no antes. La siguiente fase del roadmap es la **Fase 4** (pantallas y navegación), aunque conviene resolver primero el bloqueo de emulador de arriba.
 
 ### Nota de versiones (importante para no repetir el error)
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_dimens.dart';
+import '../../../core/di/providers.dart';
 import '../../../core/services/game_ticker_service.dart';
 import '../domain/entities/game_status.dart';
 import 'viewmodels/game_controller.dart';
@@ -22,12 +23,13 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final GameTickerService _ticker = GameTickerService();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Starting a new game mutates gameControllerProvider's state, which
     // Riverpod forbids while the widget tree is still building; deferring
     // to the next microtask runs it right after this frame instead.
@@ -38,8 +40,21 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The ambient loop pauses/resumes with the app itself — spec.md 6.2.
+    final audio = ref.read(audioServiceProvider);
+    if (state == AppLifecycleState.resumed) {
+      audio.startAmbient();
+    } else {
+      audio.pauseAmbient();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker.stop();
+    ref.read(audioServiceProvider).pauseAmbient();
     super.dispose();
   }
 
