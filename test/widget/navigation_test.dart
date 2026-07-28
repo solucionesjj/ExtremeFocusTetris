@@ -1,0 +1,64 @@
+import 'package:extreme_focus_tetris/app.dart';
+import 'package:extreme_focus_tetris/core/l10n/generated/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Future<AppLocalizations> _pumpToHome(WidgetTester tester) async {
+  await tester.pumpWidget(const ProviderScope(child: ExtremeFocusTetrisApp()));
+  await tester.pump(const Duration(milliseconds: 900));
+  await tester.pumpAndSettle();
+  return AppLocalizations.of(tester.element(find.byType(Scaffold).first))!;
+}
+
+void main() {
+  testWidgets('Home -> Settings -> back returns to Home', (tester) async {
+    final l10n = await _pumpToHome(tester);
+
+    await tester.tap(find.text(l10n.homeSettingsButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.settingsSound), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.homePlayButton), findsOneWidget);
+  });
+
+  testWidgets('Home -> Statistics shows the zeroed placeholder stats', (tester) async {
+    final l10n = await _pumpToHome(tester);
+
+    await tester.tap(find.text(l10n.homeStatisticsButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.statisticsHighScore), findsOneWidget);
+    expect(find.text('0'), findsWidgets);
+  });
+
+  testWidgets('Home -> About shows the app name', (tester) async {
+    final l10n = await _pumpToHome(tester);
+
+    await tester.tap(find.text(l10n.homeAboutButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.appTitle), findsOneWidget);
+  });
+
+  testWidgets('Home -> Jugar reaches the Game screen', (tester) async {
+    final l10n = await _pumpToHome(tester);
+
+    await tester.tap(find.text(l10n.homePlayButton));
+    // GameScreen runs a real-time Ticker, so avoid pumpAndSettle (it would
+    // never settle) — a couple of bounded pumps are enough to let the
+    // pushed route and the deferred startNewGame() microtask resolve.
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byIcon(Icons.pause), findsOneWidget);
+
+    // GameScreen's Ticker keeps requesting frames indefinitely; unmount the
+    // tree so its dispose() stops it before the test binding tears down.
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+}

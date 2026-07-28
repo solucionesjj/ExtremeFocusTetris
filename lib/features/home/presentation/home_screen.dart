@@ -1,0 +1,102 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/constants/app_dimens.dart';
+import '../../../core/l10n/generated/app_localizations.dart';
+import '../../../core/routing/routes.dart';
+import '../../settings/presentation/viewmodels/settings_controller.dart';
+import '../../statistics/presentation/viewmodels/statistics_controller.dart';
+
+/// spec.md section 10.2. "Continuar" (resuming a saved session) is
+/// roadmap Phase 5 scope (Hive `session_box`) — always shows "Jugar" for
+/// now.
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late bool _focusModeForThisGame;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusModeForThisGame = ref.read(settingsControllerProvider).focusModeDefault;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final highScore = ref.watch(statisticsControllerProvider).highScore;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppDimens.spacingXl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.appTitle,
+                  style: theme.textTheme.displayLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimens.spacingLg),
+                Text(
+                  l10n.homeHighScore(highScore),
+                  style: theme.textTheme.bodyLarge,
+                ),
+                const SizedBox(height: AppDimens.spacingXl),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.homeFocusModeToggle),
+                  value: _focusModeForThisGame,
+                  onChanged: (value) => setState(() => _focusModeForThisGame = value),
+                ),
+                const SizedBox(height: AppDimens.spacingMd),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.push(Routes.game, extra: _focusModeForThisGame),
+                    child: Text(l10n.homePlayButton),
+                  ),
+                ),
+                const SizedBox(height: AppDimens.spacingMd),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => context.push(Routes.statistics),
+                        child: Text(l10n.homeStatisticsButton),
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.spacingMd),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => context.push(Routes.settings),
+                        child: Text(l10n.homeSettingsButton),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppDimens.spacingMd),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.push(Routes.about),
+                    child: Text(l10n.homeAboutButton),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

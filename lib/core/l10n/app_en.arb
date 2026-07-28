@@ -4,8 +4,67 @@
   "@appTitle": {
     "description": "Application name, shown in the OS task switcher and splash screen"
   },
-  "homeScaffoldPlaceholder": "Home screen coming soon",
-  "@homeScaffoldPlaceholder": {
-    "description": "Temporary placeholder shown on the app's initial screen until the Home feature (roadmap Phase 4) is implemented"
-  }
+  "homeHighScore": "High score: {score}",
+  "@homeHighScore": {
+    "description": "High score shown on the Home screen",
+    "placeholders": {
+      "score": {"type": "int"}
+    }
+  },
+  "homeFocusModeToggle": "Focus Mode",
+  "homePlayButton": "PLAY",
+  "homeStatisticsButton": "Statistics",
+  "homeSettingsButton": "Settings",
+  "homeAboutButton": "About",
+  "settingsTitle": "Settings",
+  "settingsSound": "Sound",
+  "settingsAmbientVolume": "Ambient volume",
+  "settingsSfxVolume": "Effects volume",
+  "settingsHaptics": "Vibration",
+  "settingsFocusModeDefault": "Focus Mode by default",
+  "settingsGhostPiece": "Ghost piece",
+  "settingsTheme": "Theme",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeSystem": "System",
+  "settingsLanguage": "Language",
+  "settingsLanguageSpanish": "Español",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageSystem": "System",
+  "settingsResetStatistics": "Reset statistics",
+  "settingsResetStatisticsConfirmTitle": "Reset statistics?",
+  "settingsResetStatisticsConfirmBody": "This cannot be undone.",
+  "commonCancel": "Cancel",
+  "commonConfirm": "Confirm",
+  "statisticsTitle": "Statistics",
+  "statisticsHighScore": "High score",
+  "statisticsGamesPlayed": "Games played",
+  "statisticsTotalLines": "Total lines",
+  "statisticsTetrises": "Tetrises",
+  "statisticsTSpins": "T-Spins",
+  "statisticsPerfectClears": "Perfect Clears",
+  "statisticsTimePlayed": "Time played",
+  "aboutVersion": "Version {version} (build {build})",
+  "@aboutVersion": {
+    "description": "App version shown on the About screen",
+    "placeholders": {
+      "version": {"type": "String"},
+      "build": {"type": "String"}
+    }
+  },
+  "aboutDescription": "Personal use. No ads, no purchases, no network connection.",
+  "gameOverTitle": "GAME OVER",
+  "gameScoreLabel": "Score: {score}",
+  "@gameScoreLabel": {
+    "description": "Final score shown on the Game Over overlay",
+    "placeholders": {
+      "score": {"type": "int"}
+    }
+  },
+  "gamePauseTitle": "PAUSED",
+  "gameResume": "Resume",
+  "gameRestart": "Restart",
+  "gameExitToMenu": "Exit to menu",
+  "gamePlayAgain": "Play again",
+  "gameMainMenu": "Main menu"
 }

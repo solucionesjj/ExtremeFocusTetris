@@ -38,7 +38,8 @@ class GameController extends _$GameController {
   @override
   GameState? build() => null;
 
-  void startNewGame() {
+  void startNewGame({bool? focusMode}) {
+    if (focusMode != null) this.focusMode = focusMode;
     _fallAccumulator = Duration.zero;
     _lockDelayAccumulator = Duration.zero;
     _softDropHeld = false;

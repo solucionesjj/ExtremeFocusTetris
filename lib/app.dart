@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'core/di/providers.dart';
 import 'core/l10n/generated/app_localizations.dart';
+import 'core/routing/app_router.dart';
 import 'core/theme/app_theme_dark.dart';
 import 'core/theme/app_theme_light.dart';
-import 'features/game/presentation/game_screen.dart';
 
-class ExtremeFocusTetrisApp extends ConsumerWidget {
+class ExtremeFocusTetrisApp extends ConsumerStatefulWidget {
   const ExtremeFocusTetrisApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExtremeFocusTetrisApp> createState() => _ExtremeFocusTetrisAppState();
+}
+
+class _ExtremeFocusTetrisAppState extends ConsumerState<ExtremeFocusTetrisApp> {
+  // Created once per app run (not per build), so navigation state survives
+  // theme/locale changes — see the doc comment on createAppRouter().
+  late final GoRouter _router = createAppRouter();
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeControllerProvider);
     final locale = ref.watch(localeControllerProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
@@ -24,42 +34,7 @@ class ExtremeFocusTetrisApp extends ConsumerWidget {
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const _HomePlaceholder(),
-    );
-  }
-}
-
-/// Stand-in for the Home screen until roadmap Phase 4 (Pantallas y
-/// navegación) wires up go_router; the "Jugar (debug)" button is a
-/// temporary way to reach [GameScreen] while it's being built in Phase 2.
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.homeScaffoldPlaceholder,
-              style: Theme.of(context).textTheme.headlineMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GameScreen()),
-                );
-              },
-              child: const Text('Jugar (debug)'),
-            ),
-          ],
-        ),
-      ),
+      routerConfig: _router,
     );
   }
 }

@@ -104,11 +104,269 @@ abstract class AppLocalizations {
   /// **'Extreme Focus Tetris'**
   String get appTitle;
 
-  /// Temporary placeholder shown on the app's initial screen until the Home feature (roadmap Phase 4) is implemented
+  /// High score shown on the Home screen
   ///
   /// In en, this message translates to:
-  /// **'Home screen coming soon'**
-  String get homeScaffoldPlaceholder;
+  /// **'High score: {score}'**
+  String homeHighScore(int score);
+
+  /// No description provided for @homeFocusModeToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Mode'**
+  String get homeFocusModeToggle;
+
+  /// No description provided for @homePlayButton.
+  ///
+  /// In en, this message translates to:
+  /// **'PLAY'**
+  String get homePlayButton;
+
+  /// No description provided for @homeStatisticsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get homeStatisticsButton;
+
+  /// No description provided for @homeSettingsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get homeSettingsButton;
+
+  /// No description provided for @homeAboutButton.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get homeAboutButton;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get settingsSound;
+
+  /// No description provided for @settingsAmbientVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Ambient volume'**
+  String get settingsAmbientVolume;
+
+  /// No description provided for @settingsSfxVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Effects volume'**
+  String get settingsSfxVolume;
+
+  /// No description provided for @settingsHaptics.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get settingsHaptics;
+
+  /// No description provided for @settingsFocusModeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Mode by default'**
+  String get settingsFocusModeDefault;
+
+  /// No description provided for @settingsGhostPiece.
+  ///
+  /// In en, this message translates to:
+  /// **'Ghost piece'**
+  String get settingsGhostPiece;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Español'**
+  String get settingsLanguageSpanish;
+
+  /// No description provided for @settingsLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// No description provided for @settingsLanguageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsLanguageSystem;
+
+  /// No description provided for @settingsResetStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset statistics'**
+  String get settingsResetStatistics;
+
+  /// No description provided for @settingsResetStatisticsConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset statistics?'**
+  String get settingsResetStatisticsConfirmTitle;
+
+  /// No description provided for @settingsResetStatisticsConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get settingsResetStatisticsConfirmBody;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commonCancel;
+
+  /// No description provided for @commonConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get commonConfirm;
+
+  /// No description provided for @statisticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statisticsTitle;
+
+  /// No description provided for @statisticsHighScore.
+  ///
+  /// In en, this message translates to:
+  /// **'High score'**
+  String get statisticsHighScore;
+
+  /// No description provided for @statisticsGamesPlayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Games played'**
+  String get statisticsGamesPlayed;
+
+  /// No description provided for @statisticsTotalLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Total lines'**
+  String get statisticsTotalLines;
+
+  /// No description provided for @statisticsTetrises.
+  ///
+  /// In en, this message translates to:
+  /// **'Tetrises'**
+  String get statisticsTetrises;
+
+  /// No description provided for @statisticsTSpins.
+  ///
+  /// In en, this message translates to:
+  /// **'T-Spins'**
+  String get statisticsTSpins;
+
+  /// No description provided for @statisticsPerfectClears.
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect Clears'**
+  String get statisticsPerfectClears;
+
+  /// No description provided for @statisticsTimePlayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Time played'**
+  String get statisticsTimePlayed;
+
+  /// App version shown on the About screen
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} (build {build})'**
+  String aboutVersion(String version, String build);
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal use. No ads, no purchases, no network connection.'**
+  String get aboutDescription;
+
+  /// No description provided for @gameOverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GAME OVER'**
+  String get gameOverTitle;
+
+  /// Final score shown on the Game Over overlay
+  ///
+  /// In en, this message translates to:
+  /// **'Score: {score}'**
+  String gameScoreLabel(int score);
+
+  /// No description provided for @gamePauseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PAUSED'**
+  String get gamePauseTitle;
+
+  /// No description provided for @gameResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get gameResume;
+
+  /// No description provided for @gameRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get gameRestart;
+
+  /// No description provided for @gameExitToMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit to menu'**
+  String get gameExitToMenu;
+
+  /// No description provided for @gamePlayAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Play again'**
+  String get gamePlayAgain;
+
+  /// No description provided for @gameMainMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Main menu'**
+  String get gameMainMenu;
 }
 
 class _AppLocalizationsDelegate
