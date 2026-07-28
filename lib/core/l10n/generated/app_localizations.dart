@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'PLAY'**
   String get homePlayButton;
 
+  /// No description provided for @homeContinueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE'**
+  String get homeContinueButton;
+
   /// No description provided for @homeStatisticsButton.
   ///
   /// In en, this message translates to:

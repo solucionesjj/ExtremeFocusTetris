@@ -19,6 +19,19 @@ void main() {
     });
   });
 
+  group('serialization', () {
+    test('toCellList/fromCellList round-trips a board exactly', () {
+      final board = Board.empty().lockPiece(
+        const Tetromino(type: TetrominoType.t, rotation: RotationState.spawn, origin: GridPosition(5, 3)),
+      );
+
+      final restored = Board.fromCellList(board.toCellList());
+
+      expect(restored.cellAt(const GridPosition(6, 4)), TetrominoType.t);
+      expect(restored.toCellList(), board.toCellList());
+    });
+  });
+
   group('canPlace', () {
     test('rejects a piece that would go out of the left bound', () {
       final board = Board.empty();

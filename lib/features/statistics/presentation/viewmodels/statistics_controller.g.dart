@@ -7,11 +7,10 @@ part of 'statistics_controller.dart';
 // **************************************************************************
 
 String _$statisticsControllerHash() =>
-    r'd190dc8c9de670fadb068a909dc638e023f74251';
+    r'a32b39963e33c36f67c28279914b3b83ea4b1117';
 
-/// Placeholder until roadmap Phase 5 wires this to Hive's `stats_box`.
-/// `resetStatistics` is already wired for that future state — right now
-/// there's nothing accumulated to reset.
+/// Accumulated statistics — spec.md section 8.9, persisted in Hive's
+/// `stats_box` (spec.md section 13).
 ///
 /// Copied from [StatisticsController].
 @ProviderFor(StatisticsController)

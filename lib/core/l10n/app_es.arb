@@ -4,6 +4,7 @@
   "homeHighScore": "Récord: {score}",
   "homeFocusModeToggle": "Modo Concentración",
   "homePlayButton": "JUGAR",
+  "homeContinueButton": "CONTINUAR",
   "homeStatisticsButton": "Estadísticas",
   "homeSettingsButton": "Configuración",
   "homeAboutButton": "Acerca de",

@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_dimens.dart';
+import '../../../core/di/providers.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../../../core/routing/routes.dart';
 import '../../settings/presentation/viewmodels/settings_controller.dart';
 import '../../statistics/presentation/viewmodels/statistics_controller.dart';
 
-/// spec.md section 10.2. "Continuar" (resuming a saved session) is
-/// roadmap Phase 5 scope (Hive `session_box`) — always shows "Jugar" for
-/// now.
+/// spec.md section 10.2. Shows "Continuar" instead of "Jugar" when a saved
+/// session exists (spec.md section 13).
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -32,6 +32,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final highScore = ref.watch(statisticsControllerProvider).highScore;
+    final hasSavedSession = ref.read(gameRepositoryProvider).hasSavedSession();
 
     return Scaffold(
       body: SafeArea(
@@ -62,8 +63,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.push(Routes.game, extra: _focusModeForThisGame),
-                    child: Text(l10n.homePlayButton),
+                    onPressed: () => context.push(
+                      Routes.game,
+                      extra: (focusMode: _focusModeForThisGame, resume: hasSavedSession),
+                    ),
+                    child: Text(hasSavedSession ? l10n.homeContinueButton : l10n.homePlayButton),
                   ),
                 ),
                 const SizedBox(height: AppDimens.spacingMd),

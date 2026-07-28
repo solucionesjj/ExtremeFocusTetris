@@ -18,11 +18,12 @@ import 'widgets/touch_controls.dart';
 
 /// The Game screen — board, HUD, controls, and the Pause/Game Over
 /// overlays (spec.md section 10.2). Reached by pushing [Routes.game] with
-/// an optional `focusMode` bool as `extra`.
+/// a `({bool focusMode, bool resume})` record as `extra`.
 class GameScreen extends ConsumerStatefulWidget {
   final bool focusMode;
+  final bool resume;
 
-  const GameScreen({super.key, this.focusMode = false});
+  const GameScreen({super.key, this.focusMode = false, this.resume = false});
 
   @override
   ConsumerState<GameScreen> createState() => _GameScreenState();
@@ -42,12 +43,18 @@ class _GameScreenState extends ConsumerState<GameScreen>
     super.initState();
     _audioService = ref.read(audioServiceProvider);
     WidgetsBinding.instance.addObserver(this);
-    // Starting a new game mutates gameControllerProvider's state, which
-    // Riverpod forbids while the widget tree is still building; deferring
-    // to the next microtask runs it right after this frame instead.
-    Future.microtask(
-      () => ref.read(gameControllerProvider.notifier).startNewGame(focusMode: widget.focusMode),
-    );
+    // Starting/resuming a game mutates gameControllerProvider's state,
+    // which Riverpod forbids while the widget tree is still building;
+    // deferring to the next microtask runs it right after this frame
+    // instead.
+    Future.microtask(() {
+      final controller = ref.read(gameControllerProvider.notifier);
+      if (widget.resume) {
+        controller.resumeSession();
+      } else {
+        controller.startNewGame(focusMode: widget.focusMode);
+      }
+    });
     _startTicker();
   }
 
@@ -61,6 +68,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     setState(() => _isPaused = !_isPaused);
     if (_isPaused) {
       _ticker.stop();
+      // Save on pause — spec.md section 13.
+      ref.read(gameControllerProvider.notifier).saveSessionNow();
     } else {
       _startTicker();
     }
@@ -79,6 +88,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       _audioService.startAmbient();
     } else {
       _audioService.pauseAmbient();
+      // Save on backgrounding (AppLifecycleState.paused) — spec.md 13.
+      ref.read(gameControllerProvider.notifier).saveSessionNow();
     }
   }
 

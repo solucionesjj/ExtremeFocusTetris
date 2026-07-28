@@ -18,6 +18,17 @@ class Board {
 
   factory Board.empty() => Board._(List<int>.filled(columns * totalRows, 0));
 
+  /// Restores a board from a flat cell array — used by the persistence
+  /// layer (spec.md section 13) to rebuild a saved session. [cells] must
+  /// have exactly `columns * totalRows` entries.
+  factory Board.fromCellList(List<int> cells) {
+    assert(cells.length == columns * totalRows);
+    return Board._(List<int>.of(cells));
+  }
+
+  /// The flat cell array, for serialization only — see [Board.fromCellList].
+  List<int> toCellList() => List<int>.of(_cells);
+
   int _indexOf(GridPosition p) => p.row * columns + p.col;
 
   bool isInsideBounds(GridPosition p) =>

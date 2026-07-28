@@ -13,6 +13,7 @@
   },
   "homeFocusModeToggle": "Focus Mode",
   "homePlayButton": "PLAY",
+  "homeContinueButton": "CONTINUE",
   "homeStatisticsButton": "Statistics",
   "homeSettingsButton": "Settings",
   "homeAboutButton": "About",

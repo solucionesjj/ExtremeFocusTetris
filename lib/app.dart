@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'core/di/providers.dart';
 import 'core/l10n/generated/app_localizations.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme_dark.dart';
 import 'core/theme/app_theme_light.dart';
+import 'features/settings/presentation/viewmodels/settings_controller.dart';
 
 class ExtremeFocusTetrisApp extends ConsumerStatefulWidget {
   const ExtremeFocusTetrisApp({super.key});
@@ -22,16 +22,15 @@ class _ExtremeFocusTetrisAppState extends ConsumerState<ExtremeFocusTetrisApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeModeControllerProvider);
-    final locale = ref.watch(localeControllerProvider);
+    final settings = ref.watch(settingsControllerProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
-      themeMode: themeMode,
+      themeMode: settings.themeMode,
       theme: AppThemeLight.theme,
       darkTheme: AppThemeDark.theme,
-      locale: locale,
+      locale: settings.locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       routerConfig: _router,

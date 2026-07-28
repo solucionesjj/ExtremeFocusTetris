@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/di/providers.dart';
 import '../../../../core/services/audio_service.dart';
+import '../../../statistics/presentation/viewmodels/statistics_controller.dart';
 import '../../domain/entities/game_state.dart';
 import '../../domain/entities/game_status.dart';
 import '../../domain/entities/t_spin_type.dart';
@@ -21,8 +22,9 @@ part 'game_controller.g.dart';
 /// Owns the in-progress [GameState] and the gravity / lock-delay bookkeeping
 /// that a real-time ticker (see `GameTickerService`) drives via [onTick].
 /// Every mutation is delegated to a pure domain use case; this class only
-/// decides *when* to call them, and which sound/haptic (spec.md section 6)
-/// each outcome deserves.
+/// decides *when* to call them, which sound/haptic (spec.md section 6) each
+/// outcome deserves, and when to persist a session snapshot or the final
+/// tally for a finished game (spec.md section 13).
 @riverpod
 class GameController extends _$GameController {
   final Random _random = Random();
@@ -35,16 +37,56 @@ class GameController extends _$GameController {
   bool _softDropHeld = false;
   bool focusMode = false;
 
+  // Per-game tallies for the Statistics screen (spec.md 8.9) — the
+  // session snapshot itself doesn't carry these (spec.md 13 only lists
+  // board/piece/score/level/time), so a resumed game's pre-pause tallies
+  // aren't retroactively counted; only what happens from resume onward is.
+  int _sessionTetrises = 0;
+  int _sessionTSpins = 0;
+  int _sessionPerfectClears = 0;
+  Duration _sessionPlayTime = Duration.zero;
+
   @override
   GameState? build() => null;
 
   void startNewGame({bool? focusMode}) {
     if (focusMode != null) this.focusMode = focusMode;
+    _resetSessionTracking();
+    state = StartNewGame.call(_random);
+    ref.read(audioServiceProvider).startAmbient();
+    ref.read(gameRepositoryProvider).clearSession();
+  }
+
+  /// Restores the last saved session (spec.md section 13), or starts a
+  /// fresh game if there's nothing to resume.
+  void resumeSession() {
+    final saved = ref.read(gameRepositoryProvider).loadSession();
+    if (saved == null) {
+      startNewGame();
+      return;
+    }
+    _resetSessionTracking();
+    _sessionPlayTime = saved.elapsed;
+    state = saved.state;
+    ref.read(audioServiceProvider).startAmbient();
+  }
+
+  void _resetSessionTracking() {
     _fallAccumulator = Duration.zero;
     _lockDelayAccumulator = Duration.zero;
     _softDropHeld = false;
-    state = StartNewGame.call(_random);
-    ref.read(audioServiceProvider).startAmbient();
+    _sessionTetrises = 0;
+    _sessionTSpins = 0;
+    _sessionPerfectClears = 0;
+    _sessionPlayTime = Duration.zero;
+  }
+
+  /// Saves the current session — called on pause and on backgrounding
+  /// (spec.md section 13).
+  void saveSessionNow() {
+    final current = state;
+    if (current == null || current.status == GameStatus.gameOver) return;
+    ref.read(gameRepositoryProvider).saveSession(current, elapsed: _sessionPlayTime);
   }
 
   void moveLeft() => _applyPlayerAction(MovePiece.left, sfx: SfxEvent.move, haptic: _HapticKind.move);
@@ -94,6 +136,7 @@ class GameController extends _$GameController {
       if (result.status == GameStatus.gameOver) {
         ref.read(audioServiceProvider).playSfx(SfxEvent.gameOver);
         ref.read(hapticServiceProvider).onGameOver();
+        _onGameEnded(result);
       }
     }
     state = result;
@@ -104,6 +147,7 @@ class GameController extends _$GameController {
     final current = state;
     if (current == null || current.status == GameStatus.gameOver) return;
 
+    _sessionPlayTime += delta;
     var working = current;
 
     _fallAccumulator += delta;
@@ -148,6 +192,7 @@ class GameController extends _$GameController {
     final outcome = result.outcome;
 
     if (outcome.tSpinType != TSpinType.none) {
+      _sessionTSpins++;
       audio.playSfx(SfxEvent.tSpin);
       haptics.onLineClear();
     } else if (outcome.linesCleared > 0) {
@@ -157,9 +202,11 @@ class GameController extends _$GameController {
         3 => SfxEvent.lineClear3,
         _ => SfxEvent.lineClearTetris,
       };
+      if (outcome.linesCleared == 4) _sessionTetrises++;
       audio.playSfx(sfx);
       haptics.onLineClear();
     }
+    if (outcome.isPerfectClear) _sessionPerfectClears++;
 
     if (result.state.level > previousState.level) {
       audio.playSfx(SfxEvent.levelUp);
@@ -168,7 +215,22 @@ class GameController extends _$GameController {
     if (result.state.status == GameStatus.gameOver) {
       audio.playSfx(SfxEvent.gameOver);
       haptics.onGameOver();
+      _onGameEnded(result.state);
     }
+  }
+
+  void _onGameEnded(GameState finalState) {
+    ref
+        .read(statisticsControllerProvider.notifier)
+        .recordFinishedGame(
+          finalScore: finalState.score,
+          linesCleared: finalState.totalLinesCleared,
+          tetrises: _sessionTetrises,
+          tSpins: _sessionTSpins,
+          perfectClears: _sessionPerfectClears,
+          playTime: _sessionPlayTime,
+        );
+    ref.read(gameRepositoryProvider).clearSession();
   }
 
   void _applyPlayerAction(

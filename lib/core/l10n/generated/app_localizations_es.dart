@@ -23,6 +23,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homePlayButton => 'JUGAR';
 
   @override
+  String get homeContinueButton => 'CONTINUAR';
+
+  @override
   String get homeStatisticsButton => 'Estadísticas';
 
   @override

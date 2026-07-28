@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_dimens.dart';
-import '../../../core/di/providers.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../../statistics/presentation/viewmodels/statistics_controller.dart';
 import 'viewmodels/settings_controller.dart';
 
 /// spec.md section 12. Every control applies immediately (no "Save"
-/// button); in-memory only until roadmap Phase 5 backs it with Hive.
+/// button) and persists to Hive via [SettingsController] (spec.md 13).
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -17,8 +16,6 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsControllerProvider);
     final settingsController = ref.read(settingsControllerProvider.notifier);
-    final themeMode = ref.watch(themeModeControllerProvider);
-    final locale = ref.watch(localeControllerProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
@@ -68,21 +65,20 @@ class SettingsScreen extends ConsumerWidget {
                 ButtonSegment(value: ThemeMode.dark, label: Text(l10n.settingsThemeDark)),
                 ButtonSegment(value: ThemeMode.system, label: Text(l10n.settingsThemeSystem)),
               ],
-              selected: {themeMode},
-              onSelectionChanged: (selection) =>
-                  ref.read(themeModeControllerProvider.notifier).set(selection.first),
+              selected: {settings.themeMode},
+              onSelectionChanged: (selection) => settingsController.setThemeMode(selection.first),
             ),
           ),
           ListTile(
             title: Text(l10n.settingsLanguage),
             trailing: DropdownButton<Locale?>(
-              value: locale,
+              value: settings.locale,
               items: [
                 DropdownMenuItem(value: null, child: Text(l10n.settingsLanguageSystem)),
                 DropdownMenuItem(value: const Locale('es'), child: Text(l10n.settingsLanguageSpanish)),
                 DropdownMenuItem(value: const Locale('en'), child: Text(l10n.settingsLanguageEnglish)),
               ],
-              onChanged: (value) => ref.read(localeControllerProvider.notifier).set(value),
+              onChanged: settingsController.setLocale,
             ),
           ),
           const SizedBox(height: AppDimens.spacingXl),
@@ -118,7 +114,7 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true) {
-      ref.read(statisticsControllerProvider.notifier).resetStatistics();
+      await ref.read(statisticsControllerProvider.notifier).resetStatistics();
     }
   }
 }

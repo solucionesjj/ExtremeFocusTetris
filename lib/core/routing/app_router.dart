@@ -32,10 +32,13 @@ GoRouter createAppRouter() => GoRouter(
     ),
     GoRoute(
       path: Routes.game,
-      pageBuilder: (context, state) => _fadePage(
-        GameScreen(focusMode: (state.extra as bool?) ?? false),
-        state,
-      ),
+      pageBuilder: (context, state) {
+        final extra = state.extra as ({bool focusMode, bool resume})?;
+        return _fadePage(
+          GameScreen(focusMode: extra?.focusMode ?? false, resume: extra?.resume ?? false),
+          state,
+        );
+      },
     ),
     GoRoute(
       path: Routes.settings,

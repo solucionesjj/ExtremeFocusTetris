@@ -7,11 +7,11 @@ part of 'settings_controller.dart';
 // **************************************************************************
 
 String _$settingsControllerHash() =>
-    r'370a316a8f1729f0499b2a9954ec2ca2711671a0';
+    r'3a2d9931f0ee9b40ab7740a111c9808b366621a1';
 
-/// Owns user preferences (spec.md section 12) and immediately applies the
-/// audio/haptic ones to [AudioService]/[HapticService]. In-memory for now —
-/// becomes Hive-backed in roadmap Phase 5, without changing this API.
+/// Owns user preferences (spec.md section 12), persists them to Hive's
+/// `settings_box` (spec.md section 13) on every change, and immediately
+/// applies the audio/haptic ones to [AudioService]/[HapticService].
 ///
 /// Copied from [SettingsController].
 @ProviderFor(SettingsController)

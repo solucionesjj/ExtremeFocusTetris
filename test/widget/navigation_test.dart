@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../test_helpers/hive_test_setup.dart';
+
 Future<AppLocalizations> _pumpToHome(WidgetTester tester) async {
   await tester.pumpWidget(const ProviderScope(child: ExtremeFocusTetrisApp()));
   await tester.pump(const Duration(milliseconds: 900));
@@ -12,6 +14,8 @@ Future<AppLocalizations> _pumpToHome(WidgetTester tester) async {
 }
 
 void main() {
+  setUpHiveForTesting();
+
   testWidgets('Home -> Settings -> back returns to Home', (tester) async {
     final l10n = await _pumpToHome(tester);
 

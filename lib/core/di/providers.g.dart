@@ -46,44 +46,65 @@ final hapticServiceProvider = Provider<HapticService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HapticServiceRef = ProviderRef<HapticService>;
-String _$themeModeControllerHash() =>
-    r'3fd074bdab79b50e81defa1df7d3660d37c5bed5';
+String _$settingsRepositoryHash() =>
+    r'2ba63172eec044dcaaafdfdbdacd939422a8ca82';
 
-/// In-memory theme selection. Becomes Hive-backed in roadmap Phase 5
-/// (Persistencia) without changing this provider's public surface.
+/// spec.md section 13 (`settings_box`). The Hive box must already be open
+/// (see `main.dart`) by the time anything reads this provider.
 ///
-/// Copied from [ThemeModeController].
-@ProviderFor(ThemeModeController)
-final themeModeControllerProvider =
-    AutoDisposeNotifierProvider<ThemeModeController, ThemeMode>.internal(
-      ThemeModeController.new,
-      name: r'themeModeControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$themeModeControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+/// Copied from [settingsRepository].
+@ProviderFor(settingsRepository)
+final settingsRepositoryProvider = Provider<SettingsRepository>.internal(
+  settingsRepository,
+  name: r'settingsRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$settingsRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-typedef _$ThemeModeController = AutoDisposeNotifier<ThemeMode>;
-String _$localeControllerHash() => r'812359d970a718b472aa2ae8427bff00aac5b19d';
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef SettingsRepositoryRef = ProviderRef<SettingsRepository>;
+String _$statisticsRepositoryHash() =>
+    r'56576cbd64dc454f8920cfb31ed94f304cf58bbe';
 
-/// `null` means "follow the system locale", resolved against
-/// [AppLocalizations.supportedLocales] by MaterialApp itself.
+/// spec.md section 13 (`stats_box`).
 ///
-/// Copied from [LocaleController].
-@ProviderFor(LocaleController)
-final localeControllerProvider =
-    AutoDisposeNotifierProvider<LocaleController, Locale?>.internal(
-      LocaleController.new,
-      name: r'localeControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$localeControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+/// Copied from [statisticsRepository].
+@ProviderFor(statisticsRepository)
+final statisticsRepositoryProvider = Provider<StatisticsRepository>.internal(
+  statisticsRepository,
+  name: r'statisticsRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$statisticsRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-typedef _$LocaleController = AutoDisposeNotifier<Locale?>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef StatisticsRepositoryRef = ProviderRef<StatisticsRepository>;
+String _$gameRepositoryHash() => r'51fb89472ba54150e781dd6f9bee468eec8f7ada';
+
+/// spec.md section 13 (`session_box`).
+///
+/// Copied from [gameRepository].
+@ProviderFor(gameRepository)
+final gameRepositoryProvider = Provider<GameRepository>.internal(
+  gameRepository,
+  name: r'gameRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$gameRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GameRepositoryRef = ProviderRef<GameRepository>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

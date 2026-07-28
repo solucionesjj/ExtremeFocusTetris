@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'test_helpers/hive_test_setup.dart';
+
 void main() {
+  setUpHiveForTesting();
+
   testWidgets('navigates from Splash to Home and renders localized content', (
     tester,
   ) async {

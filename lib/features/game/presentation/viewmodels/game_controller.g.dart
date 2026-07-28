@@ -6,13 +6,14 @@ part of 'game_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$gameControllerHash() => r'4d198ce95d2f72a8dbf0d2f2603a67f900bf7f5f';
+String _$gameControllerHash() => r'fdaa38feb76be032947ed9e716eab43e406062f5';
 
 /// Owns the in-progress [GameState] and the gravity / lock-delay bookkeeping
 /// that a real-time ticker (see `GameTickerService`) drives via [onTick].
 /// Every mutation is delegated to a pure domain use case; this class only
-/// decides *when* to call them, and which sound/haptic (spec.md section 6)
-/// each outcome deserves.
+/// decides *when* to call them, which sound/haptic (spec.md section 6) each
+/// outcome deserves, and when to persist a session snapshot or the final
+/// tally for a finished game (spec.md section 13).
 ///
 /// Copied from [GameController].
 @ProviderFor(GameController)
