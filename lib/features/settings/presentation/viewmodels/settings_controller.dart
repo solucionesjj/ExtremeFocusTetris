@@ -59,4 +59,24 @@ class SettingsController extends _$SettingsController {
     state = state.copyWith(locale: value);
     _persist();
   }
+
+  void setColorblindModeEnabled(bool value) {
+    state = state.copyWith(colorblindModeEnabled: value);
+    _persist();
+  }
+
+  void setTextScale(double value) {
+    state = state.copyWith(textScale: value.clamp(0.85, 1.3));
+    _persist();
+  }
+
+  void setHighContrast(bool value) {
+    state = state.copyWith(highContrast: value);
+    _persist();
+  }
+
+  void setReduceMotion(bool value) {
+    state = state.copyWith(reduceMotion: value);
+    _persist();
+  }
 }

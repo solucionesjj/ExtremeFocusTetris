@@ -254,6 +254,36 @@ abstract class AppLocalizations {
   /// **'This cannot be undone.'**
   String get settingsResetStatisticsConfirmBody;
 
+  /// No description provided for @settingsAccessibilitySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get settingsAccessibilitySection;
+
+  /// No description provided for @settingsColorblindMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Colorblind mode'**
+  String get settingsColorblindMode;
+
+  /// No description provided for @settingsTextScale.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get settingsTextScale;
+
+  /// No description provided for @settingsHighContrast.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get settingsHighContrast;
+
+  /// No description provided for @settingsReduceMotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get settingsReduceMotion;
+
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:

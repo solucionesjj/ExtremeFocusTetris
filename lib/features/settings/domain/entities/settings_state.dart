@@ -16,6 +16,15 @@ class SettingsState {
   /// `null` means "follow the system locale".
   final Locale? locale;
 
+  // Accessibility (spec.md section 14).
+  final bool colorblindModeEnabled;
+
+  /// Applied via `MediaQuery.textScaler` app-wide — spec.md section 14
+  /// bounds this to 0.85x-1.3x so the board's HUD layout never breaks.
+  final double textScale;
+  final bool highContrast;
+  final bool reduceMotion;
+
   const SettingsState({
     required this.soundEnabled,
     required this.ambientVolume,
@@ -25,6 +34,10 @@ class SettingsState {
     required this.focusModeDefault,
     required this.themeMode,
     required this.locale,
+    required this.colorblindModeEnabled,
+    required this.textScale,
+    required this.highContrast,
+    required this.reduceMotion,
   });
 
   factory SettingsState.initial() => const SettingsState(
@@ -36,6 +49,10 @@ class SettingsState {
     focusModeDefault: false,
     themeMode: ThemeMode.system,
     locale: null,
+    colorblindModeEnabled: false,
+    textScale: 1.0,
+    highContrast: false,
+    reduceMotion: false,
   );
 
   SettingsState copyWith({
@@ -49,6 +66,10 @@ class SettingsState {
     // Distinguishes "not passed" from "explicitly set to null" (system
     // locale), which a plain `Locale? locale` parameter can't do with `??`.
     Object? locale = _unset,
+    bool? colorblindModeEnabled,
+    double? textScale,
+    bool? highContrast,
+    bool? reduceMotion,
   }) => SettingsState(
     soundEnabled: soundEnabled ?? this.soundEnabled,
     ambientVolume: ambientVolume ?? this.ambientVolume,
@@ -58,5 +79,9 @@ class SettingsState {
     focusModeDefault: focusModeDefault ?? this.focusModeDefault,
     themeMode: themeMode ?? this.themeMode,
     locale: identical(locale, _unset) ? this.locale : locale as Locale?,
+    colorblindModeEnabled: colorblindModeEnabled ?? this.colorblindModeEnabled,
+    textScale: textScale ?? this.textScale,
+    highContrast: highContrast ?? this.highContrast,
+    reduceMotion: reduceMotion ?? this.reduceMotion,
   );
 }

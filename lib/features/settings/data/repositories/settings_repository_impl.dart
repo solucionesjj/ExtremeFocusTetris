@@ -26,6 +26,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
         focusModeDefault: model.focusModeDefault,
         themeMode: ThemeMode.values[model.themeModeIndex],
         locale: model.localeCode == null ? null : Locale(model.localeCode!),
+        colorblindModeEnabled: model.colorblindModeEnabled,
+        textScale: model.textScale,
+        highContrast: model.highContrast,
+        reduceMotion: model.reduceMotion,
       );
     } catch (_) {
       // Corrupt or unreadable record — spec.md section 22: fall back to
@@ -46,6 +50,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
       focusModeDefault: settings.focusModeDefault,
       themeModeIndex: settings.themeMode.index,
       localeCode: settings.locale?.languageCode,
+      colorblindModeEnabled: settings.colorblindModeEnabled,
+      textScale: settings.textScale,
+      highContrast: settings.highContrast,
+      reduceMotion: settings.reduceMotion,
     ),
   );
 }

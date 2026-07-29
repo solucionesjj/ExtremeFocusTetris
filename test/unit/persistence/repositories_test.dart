@@ -37,6 +37,10 @@ void main() {
         focusModeDefault: true,
         themeMode: ThemeMode.dark,
         locale: Locale('es'),
+        colorblindModeEnabled: true,
+        textScale: 1.2,
+        highContrast: true,
+        reduceMotion: true,
       );
 
       await repo.save(saved);
@@ -50,6 +54,10 @@ void main() {
       expect(loaded.focusModeDefault, isTrue);
       expect(loaded.themeMode, ThemeMode.dark);
       expect(loaded.locale, const Locale('es'));
+      expect(loaded.colorblindModeEnabled, isTrue);
+      expect(loaded.textScale, 1.2);
+      expect(loaded.highContrast, isTrue);
+      expect(loaded.reduceMotion, isTrue);
     });
   });
 

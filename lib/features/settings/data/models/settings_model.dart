@@ -14,6 +14,10 @@ class SettingsModel {
   final bool focusModeDefault;
   final int themeModeIndex;
   final String? localeCode;
+  final bool colorblindModeEnabled;
+  final double textScale;
+  final bool highContrast;
+  final bool reduceMotion;
 
   const SettingsModel({
     required this.soundEnabled,
@@ -24,6 +28,10 @@ class SettingsModel {
     required this.focusModeDefault,
     required this.themeModeIndex,
     required this.localeCode,
+    required this.colorblindModeEnabled,
+    required this.textScale,
+    required this.highContrast,
+    required this.reduceMotion,
   });
 }
 
@@ -46,13 +54,19 @@ class SettingsModelAdapter extends TypeAdapter<SettingsModel> {
       focusModeDefault: fields[5] as bool,
       themeModeIndex: fields[6] as int,
       localeCode: fields[7] as String?,
+      // Fields 8-11 (accessibility, Phase 8) fall back to their defaults
+      // when reading a record saved before they existed.
+      colorblindModeEnabled: fields[8] as bool? ?? false,
+      textScale: fields[9] as double? ?? 1.0,
+      highContrast: fields[10] as bool? ?? false,
+      reduceMotion: fields[11] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, SettingsModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.soundEnabled)
       ..writeByte(1)
@@ -68,6 +82,14 @@ class SettingsModelAdapter extends TypeAdapter<SettingsModel> {
       ..writeByte(6)
       ..write(obj.themeModeIndex)
       ..writeByte(7)
-      ..write(obj.localeCode);
+      ..write(obj.localeCode)
+      ..writeByte(8)
+      ..write(obj.colorblindModeEnabled)
+      ..writeByte(9)
+      ..write(obj.textScale)
+      ..writeByte(10)
+      ..write(obj.highContrast)
+      ..writeByte(11)
+      ..write(obj.reduceMotion);
   }
 }

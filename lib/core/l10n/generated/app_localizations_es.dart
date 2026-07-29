@@ -90,6 +90,21 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta acción no se puede deshacer.';
 
   @override
+  String get settingsAccessibilitySection => 'Accesibilidad';
+
+  @override
+  String get settingsColorblindMode => 'Modo daltónico';
+
+  @override
+  String get settingsTextScale => 'Tamaño de texto';
+
+  @override
+  String get settingsHighContrast => 'Alto contraste';
+
+  @override
+  String get settingsReduceMotion => 'Reducir movimiento';
+
+  @override
   String get commonCancel => 'Cancelar';
 
   @override

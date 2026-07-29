@@ -41,4 +41,42 @@ void main() {
     expect(withParticles.shouldRepaint(idle), isTrue);
     expect(idle.shouldRepaint(idle), isFalse);
   });
+
+  test('paints without throwing with colorblind textures and high-contrast strokes', () {
+    final gameState = StartNewGame.call(Random(1));
+    final painter = BoardPainter(
+      gameState: gameState,
+      gridLineColor: Colors.black12,
+      emptyCellColor: Colors.white,
+      colorblindMode: true,
+      highContrast: true,
+    );
+
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    expect(() => painter.paint(canvas, const Size(300, 600)), returnsNormally);
+
+    recorder.endRecording().dispose();
+  });
+
+  test('shouldRepaint is true when colorblindMode or highContrast toggles', () {
+    final gameState = StartNewGame.call(Random(1));
+    final standard = BoardPainter(gameState: gameState, gridLineColor: Colors.black12, emptyCellColor: Colors.white);
+    final colorblind = BoardPainter(
+      gameState: gameState,
+      gridLineColor: Colors.black12,
+      emptyCellColor: Colors.white,
+      colorblindMode: true,
+    );
+    final highContrast = BoardPainter(
+      gameState: gameState,
+      gridLineColor: Colors.black12,
+      emptyCellColor: Colors.white,
+      highContrast: true,
+    );
+
+    expect(colorblind.shouldRepaint(standard), isTrue);
+    expect(highContrast.shouldRepaint(standard), isTrue);
+  });
 }

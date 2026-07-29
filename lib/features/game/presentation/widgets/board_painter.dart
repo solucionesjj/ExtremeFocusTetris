@@ -8,9 +8,11 @@ import '../../domain/entities/board.dart';
 import '../../domain/entities/game_state.dart';
 import '../../domain/entities/grid_position.dart';
 import '../../domain/entities/tetromino.dart';
+import '../../domain/entities/tetromino_type.dart';
 import '../../domain/usecases/hard_drop.dart';
 import '../effects/particle.dart';
 import 'board_geometry.dart';
+import 'cell_texture.dart';
 import 'tetromino_colors.dart';
 
 /// Renders the 10x20 visible playfield in a single [Canvas] pass — spec.md
@@ -22,6 +24,12 @@ class BoardPainter extends CustomPainter {
   final Color emptyCellColor;
   final bool showGhost;
   final bool focusMode;
+
+  /// Colorblind-safe palette + per-piece texture overlay — spec.md section 14.
+  final bool colorblindMode;
+
+  /// Thicker block borders for the high-contrast theme — spec.md section 14.
+  final bool highContrast;
 
   /// Cleared-row flash (spec.md section 18: "flash de color... shake
   /// horizontal leve"), in visible-row coordinates (0..19). [flashOpacity]
@@ -40,6 +48,8 @@ class BoardPainter extends CustomPainter {
     required this.emptyCellColor,
     this.showGhost = true,
     this.focusMode = false,
+    this.colorblindMode = false,
+    this.highContrast = false,
     this.flashRows = const [],
     this.flashOpacity = 0,
     this.particles = const [],
@@ -116,8 +126,9 @@ class BoardPainter extends CustomPainter {
           cellSize,
           row - Board.hiddenRows,
           col,
-          colorForTetromino(type, focusMode: focusMode),
+          colorForTetromino(type, focusMode: focusMode, colorblindMode: colorblindMode),
           opacity: 1,
+          type: type,
         );
       }
     }
@@ -136,10 +147,19 @@ class BoardPainter extends CustomPainter {
     Tetromino piece, {
     required double opacity,
   }) {
-    final color = colorForTetromino(piece.type, focusMode: focusMode);
+    final color = colorForTetromino(piece.type, focusMode: focusMode, colorblindMode: colorblindMode);
     for (final cell in piece.occupiedCells) {
       if (cell.row < Board.hiddenRows) continue;
-      _paintCell(canvas, offset, cellSize, cell.row - Board.hiddenRows, cell.col, color, opacity: opacity);
+      _paintCell(
+        canvas,
+        offset,
+        cellSize,
+        cell.row - Board.hiddenRows,
+        cell.col,
+        color,
+        opacity: opacity,
+        type: piece.type,
+      );
     }
   }
 
@@ -151,6 +171,7 @@ class BoardPainter extends CustomPainter {
     int col,
     Color color, {
     required double opacity,
+    TetrominoType? type,
   }) {
     final rect = Rect.fromLTWH(
       offset.dx + col * cellSize,
@@ -173,12 +194,15 @@ class BoardPainter extends CustomPainter {
             colors: [Colors.white.withValues(alpha: 0.3), Colors.white.withValues(alpha: 0)],
           ).createShader(rect),
       );
+      if (colorblindMode && type != null) {
+        paintCellTexture(canvas, inset, textureForTetromino(type));
+      }
       canvas.drawRRect(
         rrect,
         Paint()
           ..color = Colors.black.withValues(alpha: 0.18)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = math.max(1, cellSize * 0.06),
+          ..strokeWidth = math.max(1, cellSize * (highContrast ? 0.12 : 0.06)),
       );
     }
   }
@@ -188,6 +212,8 @@ class BoardPainter extends CustomPainter {
       !identical(oldDelegate.gameState, gameState) ||
       oldDelegate.showGhost != showGhost ||
       oldDelegate.focusMode != focusMode ||
+      oldDelegate.colorblindMode != colorblindMode ||
+      oldDelegate.highContrast != highContrast ||
       oldDelegate.flashOpacity != flashOpacity ||
       !listEquals(oldDelegate.flashRows, flashRows) ||
       particles.isNotEmpty ||

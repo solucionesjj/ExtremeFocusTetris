@@ -7,7 +7,7 @@ part of 'settings_controller.dart';
 // **************************************************************************
 
 String _$settingsControllerHash() =>
-    r'3a2d9931f0ee9b40ab7740a111c9808b366621a1';
+    r'8aef3ed786420d95d4880e3d98306f88c91a5f63';
 
 /// Owns user preferences (spec.md section 12), persists them to Hive's
 /// `settings_box` (spec.md section 13) on every change, and immediately

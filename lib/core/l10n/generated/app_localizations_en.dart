@@ -89,6 +89,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsResetStatisticsConfirmBody => 'This cannot be undone.';
 
   @override
+  String get settingsAccessibilitySection => 'Accessibility';
+
+  @override
+  String get settingsColorblindMode => 'Colorblind mode';
+
+  @override
+  String get settingsTextScale => 'Text size';
+
+  @override
+  String get settingsHighContrast => 'High contrast';
+
+  @override
+  String get settingsReduceMotion => 'Reduce motion';
+
+  @override
   String get commonCancel => 'Cancel';
 
   @override

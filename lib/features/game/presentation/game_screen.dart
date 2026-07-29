@@ -130,13 +130,21 @@ class _GameScreenState extends ConsumerState<GameScreen>
     });
   }
 
+  /// Reduced motion (spec.md section 14) dampens "non-essential" animation
+  /// — spec.md names particles and shake specifically — while leaving the
+  /// color flash (a state cue, not decorative movement) untouched. Respects
+  /// both the in-app Settings toggle and the OS-level `disableAnimations`.
+  bool get _reduceMotion =>
+      ref.read(settingsControllerProvider).reduceMotion ||
+      (MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+
   void _onLineClear(LineClearEvent event) {
     final boardSize = _boardSize;
     final visibleRows = event.clearedRowIndices
         .map((row) => row - Board.hiddenRows)
         .where((row) => row >= 0 && row < Board.visibleRows)
         .toList();
-    if (boardSize != null && visibleRows.isNotEmpty) {
+    if (boardSize != null && visibleRows.isNotEmpty && !_reduceMotion) {
       final geometry = BoardGeometry.of(boardSize);
       _particlePool.emitForLineClear(
         cellCentersX: List.generate(Board.columns, geometry.columnCenterX),
@@ -343,6 +351,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           child: HoldWidget(
                             holdPiece: gameState.holdPiece,
                             isUsed: gameState.holdUsed,
+                            colorblindMode: settings.colorblindModeEnabled,
                           ),
                         ),
                       Expanded(
@@ -367,8 +376,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
                                   _gameOverShakeController,
                                 ]),
                                 builder: (context, child) {
-                                  final shakeDx = _shakeTween.evaluate(_lineClearEffectController) +
-                                      _shakeTween.evaluate(_gameOverShakeController);
+                                  final shakeDx = _reduceMotion
+                                      ? 0.0
+                                      : _shakeTween.evaluate(_lineClearEffectController) +
+                                            _shakeTween.evaluate(_gameOverShakeController);
                                   return Transform.translate(
                                     offset: Offset(shakeDx, 0),
                                     child: CustomPaint(
@@ -378,6 +389,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
                                         emptyCellColor: theme.colorScheme.surface,
                                         showGhost: settings.ghostPieceEnabled,
                                         focusMode: focusMode,
+                                        colorblindMode: settings.colorblindModeEnabled,
+                                        highContrast: settings.highContrast,
                                         flashRows: _flashRows,
                                         flashOpacity: 1 - _lineClearEffectController.value,
                                         particles: _particlePool.activeParticles,
@@ -397,6 +410,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           upcoming: gameState.nextQueue,
                           visibleCount: focusMode ? 1 : 3,
                           focusMode: focusMode,
+                          colorblindMode: settings.colorblindModeEnabled,
                         ),
                       ),
                     ],
@@ -464,6 +478,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
               _OverlayScrim(
                 title: l10n.gamePauseTitle,
                 theme: theme,
+                highContrast: settings.highContrast,
                 buttons: [
                   _OverlayButton(label: l10n.gameResume, onPressed: _togglePause),
                   _OverlayButton(label: l10n.gameRestart, onPressed: _restart),
@@ -478,6 +493,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 title: l10n.gameOverTitle,
                 subtitle: l10n.gameScoreLabel(gameState.score),
                 theme: theme,
+                highContrast: settings.highContrast,
                 buttons: [
                   _OverlayButton(label: l10n.gamePlayAgain, onPressed: _restart),
                   _OverlayButton(
@@ -498,12 +514,14 @@ class _OverlayScrim extends StatelessWidget {
   final String? subtitle;
   final ThemeData theme;
   final List<Widget> buttons;
+  final bool highContrast;
 
   const _OverlayScrim({
     required this.title,
     this.subtitle,
     required this.theme,
     required this.buttons,
+    this.highContrast = false,
   });
 
   @override
@@ -513,7 +531,8 @@ class _OverlayScrim extends StatelessWidget {
         opacity: 1,
         duration: const Duration(milliseconds: 300),
         child: Container(
-          color: theme.colorScheme.surface.withValues(alpha: 0.92),
+          // High contrast (spec.md 14) drops the HUD transparency entirely.
+          color: theme.colorScheme.surface.withValues(alpha: highContrast ? 1 : 0.92),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

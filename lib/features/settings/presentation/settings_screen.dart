@@ -59,14 +59,17 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppDimens.spacingMd),
           ListTile(
             title: Text(l10n.settingsTheme),
-            trailing: SegmentedButton<ThemeMode>(
-              segments: [
-                ButtonSegment(value: ThemeMode.light, label: Text(l10n.settingsThemeLight)),
-                ButtonSegment(value: ThemeMode.dark, label: Text(l10n.settingsThemeDark)),
-                ButtonSegment(value: ThemeMode.system, label: Text(l10n.settingsThemeSystem)),
-              ],
-              selected: {settings.themeMode},
-              onSelectionChanged: (selection) => settingsController.setThemeMode(selection.first),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: AppDimens.spacingSm),
+              child: SegmentedButton<ThemeMode>(
+                segments: [
+                  ButtonSegment(value: ThemeMode.light, label: Text(l10n.settingsThemeLight)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text(l10n.settingsThemeDark)),
+                  ButtonSegment(value: ThemeMode.system, label: Text(l10n.settingsThemeSystem)),
+                ],
+                selected: {settings.themeMode},
+                onSelectionChanged: (selection) => settingsController.setThemeMode(selection.first),
+              ),
             ),
           ),
           ListTile(
@@ -80,6 +83,35 @@ class SettingsScreen extends ConsumerWidget {
               ],
               onChanged: settingsController.setLocale,
             ),
+          ),
+          const SizedBox(height: AppDimens.spacingMd),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppDimens.spacingSm),
+            child: Text(l10n.settingsAccessibilitySection, style: Theme.of(context).textTheme.titleMedium),
+          ),
+          SwitchListTile(
+            title: Text(l10n.settingsColorblindMode),
+            value: settings.colorblindModeEnabled,
+            onChanged: settingsController.setColorblindModeEnabled,
+          ),
+          ListTile(
+            title: Text(l10n.settingsTextScale),
+            subtitle: Slider(
+              value: settings.textScale,
+              min: 0.85,
+              max: 1.3,
+              onChanged: settingsController.setTextScale,
+            ),
+          ),
+          SwitchListTile(
+            title: Text(l10n.settingsHighContrast),
+            value: settings.highContrast,
+            onChanged: settingsController.setHighContrast,
+          ),
+          SwitchListTile(
+            title: Text(l10n.settingsReduceMotion),
+            value: settings.reduceMotion,
+            onChanged: settingsController.setReduceMotion,
           ),
           const SizedBox(height: AppDimens.spacingXl),
           OutlinedButton(
