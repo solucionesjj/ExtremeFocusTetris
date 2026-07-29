@@ -13,6 +13,16 @@ import 'package:flutter_test/flutter_test.dart';
 /// top-level `setUpAll`/`tearDown` pair) before pumping anything that
 /// reads `settingsControllerProvider`, `statisticsControllerProvider`, or
 /// `gameRepositoryProvider`.
+///
+/// **If your test taps a control that persists to Hive** (any Settings
+/// toggle/slider — `SettingsController`'s setters all fire-and-forget a
+/// real `box.put()`), wrap the tap + pump + a short real delay in a single
+/// `tester.runAsync(() async { ... })` call. Without it, this helper's
+/// `tearDown()` can deadlock for real inside `box.clear()` waiting on a
+/// write that never gets to finish (found in Phase 8, fixed in Phase 9 —
+/// see `settings_screen_test.dart`'s `_tapAndLetHiveWriteSettle` helper for
+/// the exact pattern). A plain `tester.tap()` + `tester.pump()` with no
+/// `runAsync` is fine for anything that does NOT touch Hive.
 void setUpHiveForTesting() {
   late Directory tempDir;
 
